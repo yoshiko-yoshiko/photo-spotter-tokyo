@@ -1,0 +1,69 @@
+import { useLocation, useNavigate } from 'react-router-dom';
+import { MapPin, Camera, Grid3X3, User } from 'lucide-react';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
+
+const tabs = [
+  { path: '/map', icon: MapPin, label: '探す' },
+  { path: '/camera', icon: Camera, label: '撮る', isFab: true },
+  { path: '/collection', icon: Grid3X3, label: 'コレクション' },
+  { path: '/profile', icon: User, label: 'マイページ' },
+];
+
+export function BottomNav() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { isGuest } = useAuth();
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const handleTab = (path: string, isFab?: boolean) => {
+    if (isFab && isGuest) {
+      setShowAuthModal(true);
+      return;
+    }
+    navigate(path);
+  };
+
+  return (
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg h-16 md:max-w-[390px] md:mx-auto">
+        <div className="flex justify-around items-center h-full">
+          {tabs.map((tab) => {
+            const isActive = location.pathname === tab.path;
+            const Icon = tab.icon;
+
+            if (tab.isFab) {
+              return (
+                <button
+                  key={tab.path}
+                  onClick={() => handleTab(tab.path, true)}
+                  className="flex flex-col items-center -mt-4"
+                >
+                  <div className="bg-accent rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
+                    <Icon className="w-7 h-7 text-accent-foreground" />
+                  </div>
+                  <span className="text-accent text-xs mt-1 font-medium">{tab.label}</span>
+                </button>
+              );
+            }
+
+            return (
+              <button
+                key={tab.path}
+                onClick={() => handleTab(tab.path)}
+                className="flex flex-col items-center gap-0.5"
+              >
+                <Icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                <span className={`text-xs ${isActive ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+      <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+    </>
+  );
+}
