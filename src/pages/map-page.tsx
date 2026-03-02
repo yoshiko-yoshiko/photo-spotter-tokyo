@@ -180,7 +180,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative h-[calc(100dvh-64px)] flex flex-col">
+    <div className="relative h-full flex flex-col">
       {/* Search & filters - compact top bar */}
       <div className="bg-card/95 backdrop-blur-sm border-b border-border px-3 pt-2 pb-2 space-y-1.5 z-10">
         <div className="flex gap-2">

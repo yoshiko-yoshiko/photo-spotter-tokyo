@@ -55,7 +55,7 @@ export default function CollectionPage() {
 
   if (isGuest) {
     return (
-      <div className="min-h-[80dvh] flex flex-col items-center justify-center bg-surface px-4 text-center">
+      <div className="min-h-full flex flex-col items-center justify-center bg-surface px-4 text-center">
         <Lock className="w-12 h-12 text-muted-foreground mb-4" />
         <h2 className="text-lg font-bold text-foreground">ログインが必要です</h2>
         <p className="text-muted-foreground text-sm mt-2">スタンプ帳を見るにはログインしてください</p>
@@ -68,7 +68,7 @@ export default function CollectionPage() {
   }
 
   return (
-    <div className="min-h-[80dvh] bg-surface pb-4">
+    <div className="bg-surface min-h-full pb-4">
       {/* Header */}
       <div className="bg-card px-4 pt-6 pb-4 border-b border-border">
         <h1 className="text-xl font-bold text-foreground">📒 コレクション</h1>

@@ -43,7 +43,7 @@ export default function ProfilePage() {
   const avatarUrl = profile?.avatar_url;
 
   return (
-    <div className="h-[calc(100dvh-64px)] overflow-y-auto bg-surface">
+    <div className="bg-surface min-h-full">
       {/* Header */}
       <div className="bg-card px-4 pt-8 pb-6 text-center">
         <div className="mx-auto w-24 h-24 rounded-full border-4 border-primary/20 bg-muted flex items-center justify-center overflow-hidden">
