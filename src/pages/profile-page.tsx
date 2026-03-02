@@ -7,6 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
 import { RewardDetailModal } from '@/components/rewards/reward-detail-modal';
 import type { Tables } from '@/integrations/supabase/types';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 
 interface ProfileStats {
   stampCount: number;
@@ -83,7 +84,12 @@ export default function ProfilePage() {
   return (
     <div className="bg-surface min-h-full pb-24">
       {/* Header */}
-      <div className="bg-card px-4 pt-8 pb-6 text-center">
+      <div className="bg-card px-4 pt-8 pb-6 text-center relative">
+        {isAuthenticated && (
+          <div className="absolute top-4 right-4">
+            <NotificationBell />
+          </div>
+        )}
         <div className="mx-auto w-24 h-24 rounded-full border-4 border-primary/20 bg-muted flex items-center justify-center overflow-hidden">
           {avatarUrl ? (
             <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
