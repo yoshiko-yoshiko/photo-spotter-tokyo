@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
+import { PhotoGallery } from '@/components/photos/photo-gallery';
 import { useSpot } from '@/hooks/use-spots';
 import { useUserStamps } from '@/hooks/use-user-stamps';
 import { useAuth } from '@/hooks/use-auth';
@@ -193,6 +194,9 @@ export default function SpotDetailPage() {
             </a>
           </div>
         )}
+
+        {/* Photo Gallery */}
+        <PhotoGallery spotId={spot.id} />
       </div>
 
       {/* CTA */}
