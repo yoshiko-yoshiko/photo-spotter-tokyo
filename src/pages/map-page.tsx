@@ -110,6 +110,8 @@ export default function MapPage() {
       const isVisited = stampedSpotIds.has(spot.id);
 
       const el = document.createElement('div');
+      el.style.width = '40px';
+      el.style.height = '40px';
       el.className = 'relative cursor-pointer';
       el.innerHTML = `
         <div style="background:${color}" class="w-10 h-10 rounded-full border-2 border-white shadow-md flex items-center justify-center">
