@@ -5,6 +5,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/hooks/use-rewards';
 import { supabase } from '@/integrations/supabase/client';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
+import { RewardDetailModal } from '@/components/rewards/reward-detail-modal';
+import type { Tables } from '@/integrations/supabase/types';
 
 interface ProfileStats {
   stampCount: number;
@@ -21,6 +23,7 @@ export default function ProfilePage() {
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
 
   const { data: allRewards } = useRewards();
   const { data: userRewards } = useUserRewards();
@@ -147,8 +150,9 @@ export default function ProfilePage() {
             {allRewards.map(reward => {
               const isUnlocked = unlockedRewardIds.has(reward.id);
               return (
-                <div
+                <button
                   key={reward.id}
+                  onClick={() => setSelectedReward(reward)}
                   className={`rounded-2xl border p-3 text-center transition-all ${
                     isUnlocked
                       ? 'bg-card border-stamp-gold/40 shadow-sm'
@@ -172,7 +176,7 @@ export default function ProfilePage() {
                   <p className="text-[10px] text-muted-foreground mt-0.5">
                     {isUnlocked ? '獲得済み ✓' : `${reward.required_count}スタンプ`}
                   </p>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -225,6 +229,15 @@ export default function ProfilePage() {
       )}
 
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+
+      <RewardDetailModal
+        open={!!selectedReward}
+        onClose={() => setSelectedReward(null)}
+        reward={selectedReward}
+        isUnlocked={selectedReward ? unlockedRewardIds.has(selectedReward.id) : false}
+        stampCount={stats.stampCount}
+        usedAt={(userRewards || []).find(ur => ur.reward_id === selectedReward?.id)?.used_at}
+      />
     </div>
   );
 }
