@@ -1,0 +1,32 @@
+export const TOKYO_BOUNDS = {
+  latMin: 35.5,
+  latMax: 35.85,
+  lngMin: 139.5,
+  lngMax: 140.0,
+};
+
+export const TOKYO_CENTER: [number, number] = [139.7671, 35.6812];
+
+export function isInTokyo(lat: number, lng: number): boolean {
+  return (
+    lat >= TOKYO_BOUNDS.latMin &&
+    lat <= TOKYO_BOUNDS.latMax &&
+    lng >= TOKYO_BOUNDS.lngMin &&
+    lng <= TOKYO_BOUNDS.lngMax
+  );
+}
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  'ランドマーク': '#0D9488',
+  '寺社・歴史': '#9333EA',
+  '自然・公園': '#059669',
+  '都市・カルチャー': '#F97316',
+};
+
+export function getRouteUrl(lat: number, lng: number): string {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod/.test(ua)) {
+    return `https://maps.apple.com/?daddr=${lat},${lng}`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+}

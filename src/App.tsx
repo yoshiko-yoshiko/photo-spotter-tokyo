@@ -11,6 +11,7 @@ import MapPage from "@/pages/map-page";
 import CameraPage from "@/pages/camera-page";
 import CollectionPage from "@/pages/collection-page";
 import ProfilePage from "@/pages/profile-page";
+import SpotDetailPage from "@/pages/spot-detail-page";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient({
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route element={<AppLayout />}>
             <Route path="/map" element={<MapPage />} />
+            <Route path="/spots/:id" element={<SpotDetailPage />} />
             <Route path="/camera" element={<CameraPage />} />
             <Route path="/collection" element={<CollectionPage />} />
             <Route path="/profile" element={<ProfilePage />} />
