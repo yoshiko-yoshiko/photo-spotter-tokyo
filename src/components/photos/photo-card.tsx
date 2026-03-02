@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Heart, MoreVertical, Flag, Ban, X } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { usePhotoLikes, useToggleLike, useReportPhoto, useBlockUser } from '@/hooks/use-photos';
@@ -33,6 +33,8 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const [reportDetail, setReportDetail] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [heartBurst, setHeartBurst] = useState(false);
+  const lastTapRef = useRef(0);
 
   const isOwnPhoto = user?.id === photo.user_id;
 
@@ -41,8 +43,22 @@ export function PhotoCard({ photo }: PhotoCardProps) {
       setShowAuthModal(true);
       return;
     }
+    if (!isLiked) {
+      setHeartBurst(true);
+      setTimeout(() => setHeartBurst(false), 600);
+    }
     toggleLike.mutate({ photoId: photo.id, isLiked });
   };
+
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (!isLiked) handleLike();
+    }
+    lastTapRef.current = now;
+  };
+
+  const optimisticCount = photo.likes_count + (isLiked ? 0 : 0);
 
   const handleReport = async () => {
     if (!user || !reportReason) return;
@@ -77,7 +93,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border bg-card">
-        <div className="relative aspect-square bg-muted">
+        <div className="relative aspect-square bg-muted" onClick={handleDoubleTap}>
           <img
             src={photo.image_url}
             alt={photo.caption || 'Photo'}
@@ -85,6 +101,12 @@ export function PhotoCard({ photo }: PhotoCardProps) {
             loading="lazy"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
+          {/* Heart burst animation on double-tap */}
+          {heartBurst && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <Heart className="w-16 h-16 fill-white text-white drop-shadow-lg animate-like-burst" />
+            </div>
+          )}
         </div>
         <div className="p-2.5">
           {photo.caption && (
@@ -94,10 +116,12 @@ export function PhotoCard({ photo }: PhotoCardProps) {
             <button
               onClick={handleLike}
               disabled={toggleLike.isPending}
-              className="flex items-center gap-1 text-xs transition-colors"
+              className="flex items-center gap-1 text-xs transition-all active:scale-125"
             >
               <Heart
-                className={`w-4 h-4 transition-colors ${isLiked ? 'fill-destructive text-destructive' : 'text-muted-foreground'}`}
+                className={`w-4 h-4 transition-all duration-200 ${
+                  isLiked ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground'
+                }`}
               />
               <span className={isLiked ? 'text-destructive font-medium' : 'text-muted-foreground'}>
                 {photo.likes_count}
