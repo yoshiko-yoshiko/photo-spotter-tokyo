@@ -3,55 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { useSpots } from '@/hooks/use-spots';
 import { useUserStamps } from '@/hooks/use-user-stamps';
 import { useAuth } from '@/hooks/use-auth';
+import { useRewards, useUserRewards } from '@/hooks/use-rewards';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
-import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import { RewardDetailModal } from '@/components/rewards/reward-detail-modal';
 import { CATEGORY_COLORS } from '@/lib/map-utils';
-import { Camera, Gift, Lock, Check, Trophy } from 'lucide-react';
+import { Camera, Gift, Lock, Check, Trophy, Ticket } from 'lucide-react';
+import type { Tables } from '@/integrations/supabase/types';
 
 export default function CollectionPage() {
   const navigate = useNavigate();
   const { user, isGuest } = useAuth();
   const { data: spots = [] } = useSpots();
   const { data: stamps = [] } = useUserStamps();
+  const { data: rewards = [] } = useRewards();
+  const { data: userRewards = [] } = useUserRewards();
   const [tab, setTab] = useState<'stamps' | 'rewards'>('stamps');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
 
   const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
-
-  // Fetch rewards
-  const { data: rewards = [] } = useQuery({
-    queryKey: ['rewards'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rewards')
-        .select('*')
-        .eq('is_active', true)
-        .order('required_count');
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  // Fetch user rewards
-  const { data: userRewards = [] } = useQuery({
-    queryKey: ['user_rewards', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('user_rewards')
-        .select('*')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
-
   const unlockedRewardIds = new Set(userRewards.map(ur => ur.reward_id));
   const stampCount = stamps.length;
   const totalSpots = spots.length;
   const progress = totalSpots > 0 ? Math.round((stampCount / totalSpots) * 100) : 0;
+
+  const selectedUserReward = userRewards.find(ur => ur.reward_id === selectedReward?.id);
 
   if (isGuest) {
     return (
@@ -159,10 +135,12 @@ export default function CollectionPage() {
             rewards.map(reward => {
               const isUnlocked = unlockedRewardIds.has(reward.id);
               const canUnlock = stampCount >= reward.required_count;
+              const isBadge = reward.type === 'badge';
               return (
-                <div
+                <button
                   key={reward.id}
-                  className={`rounded-2xl border p-4 transition-all ${
+                  onClick={() => setSelectedReward(reward)}
+                  className={`w-full text-left rounded-2xl border p-4 transition-all active:scale-[0.98] ${
                     isUnlocked
                       ? 'border-stamp-gold bg-stamp-gold/5'
                       : canUnlock
@@ -174,7 +152,9 @@ export default function CollectionPage() {
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
                       isUnlocked ? 'bg-stamp-gold/20' : canUnlock ? 'bg-primary/10' : 'bg-muted'
                     }`}>
-                      {isUnlocked ? (
+                      {isUnlocked && isBadge && reward.badge_image_url ? (
+                        <img src={reward.badge_image_url} alt="" className="w-8 h-8 object-contain" />
+                      ) : isUnlocked ? (
                         <Trophy className="w-6 h-6 text-stamp-gold" />
                       ) : canUnlock ? (
                         <Gift className="w-6 h-6 text-primary" />
@@ -191,9 +171,17 @@ export default function CollectionPage() {
                           </span>
                         )}
                       </div>
-                      {reward.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{reward.description}</p>
-                      )}
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full ${
+                          isBadge ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'
+                        }`}>
+                          {isBadge ? <Trophy className="w-2.5 h-2.5" /> : <Ticket className="w-2.5 h-2.5" />}
+                          {isBadge ? 'バッジ' : 'クーポン'}
+                        </span>
+                        {reward.description && (
+                          <p className="text-xs text-muted-foreground truncate">{reward.description}</p>
+                        )}
+                      </div>
                       <div className="mt-2">
                         <div className="flex justify-between items-center mb-1">
                           <span className="text-xs text-muted-foreground">
@@ -211,12 +199,22 @@ export default function CollectionPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })
           )}
         </div>
       )}
+
+      {/* Reward Detail Modal */}
+      <RewardDetailModal
+        open={!!selectedReward}
+        onClose={() => setSelectedReward(null)}
+        reward={selectedReward}
+        isUnlocked={selectedReward ? unlockedRewardIds.has(selectedReward.id) : false}
+        stampCount={stampCount}
+        usedAt={selectedUserReward?.used_at}
+      />
     </div>
   );
 }
