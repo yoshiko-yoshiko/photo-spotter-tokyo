@@ -10,7 +10,7 @@ import { Tables } from '@/integrations/supabase/types';
 
 type Spot = Tables<'spots'>;
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || '';
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN as string;
 
 const CATEGORIES = ['全て', 'ランドマーク', '寺社・歴史', '自然・公園', '都市・カルチャー'] as const;
 const AREAS = ['全エリア', '港区', '台東区', '渋谷区', '墨田区', '千代田区', '新宿区'] as const;
