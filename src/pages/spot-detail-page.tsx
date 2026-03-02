@@ -5,6 +5,9 @@ import { useSpot } from '@/hooks/use-spots';
 import { useUserStamps } from '@/hooks/use-user-stamps';
 import { useAuth } from '@/hooks/use-auth';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
+import { ConfettiCanvas } from '@/components/rewards/confetti-canvas';
+import { RewardUnlockOverlay } from '@/components/rewards/reward-unlock-overlay';
+import { useRewardUnlock } from '@/hooks/use-reward-unlock';
 import { CATEGORY_COLORS, getRouteUrl } from '@/lib/map-utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -28,6 +31,7 @@ export default function SpotDetailPage() {
   const queryClient = useQueryClient();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [checkingIn, setCheckingIn] = useState(false);
+  const { newRewards, showCelebration, checkNewRewards, dismissCelebration } = useRewardUnlock();
 
   const isVisited = stamps.some(s => s.spot_id === id);
 
@@ -59,6 +63,13 @@ export default function SpotDetailPage() {
 
     setCheckingIn(true);
     try {
+      // Capture current reward IDs before stamp creation
+      const { data: prevRewards } = await supabase
+        .from('user_rewards')
+        .select('reward_id')
+        .eq('user_id', user.id);
+      const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
+
       const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
         navigator.geolocation.getCurrentPosition(resolve, reject, {
           enableHighAccuracy: true,
@@ -95,6 +106,8 @@ export default function SpotDetailPage() {
       } else {
         toast.success('チェックイン成功！スタンプを獲得 🎉');
         queryClient.invalidateQueries({ queryKey: ['stamps'] });
+        // Check for newly unlocked rewards
+        checkNewRewards(prevRewardIds);
       }
     } catch (err: any) {
       if (err?.code === 1) {
@@ -223,6 +236,8 @@ export default function SpotDetailPage() {
       </div>
 
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <ConfettiCanvas active={showCelebration} />
+      <RewardUnlockOverlay rewards={newRewards} open={showCelebration} onClose={dismissCelebration} />
     </div>
   );
 }

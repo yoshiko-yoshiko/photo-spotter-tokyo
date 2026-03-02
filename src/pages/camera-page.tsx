@@ -6,6 +6,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { useSpots } from '@/hooks/use-spots';
 import { useQueryClient } from '@tanstack/react-query';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
+import { ConfettiCanvas } from '@/components/rewards/confetti-canvas';
+import { RewardUnlockOverlay } from '@/components/rewards/reward-unlock-overlay';
+import { useRewardUnlock } from '@/hooks/use-reward-unlock';
 import { toast } from 'sonner';
 
 type Step = 'select-photo' | 'select-spot' | 'uploading' | 'done';
@@ -24,6 +27,7 @@ export default function CameraPage() {
   const [caption, setCaption] = useState('');
   const [spotSearch, setSpotSearch] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const { newRewards, showCelebration, checkNewRewards, dismissCelebration } = useRewardUnlock();
 
   // If guest, show auth modal
   useEffect(() => {
@@ -51,6 +55,13 @@ export default function CameraPage() {
     setStep('uploading');
 
     try {
+      // Capture current reward IDs before stamp creation
+      const { data: prevRewards } = await supabase
+        .from('user_rewards')
+        .select('reward_id')
+        .eq('user_id', user.id);
+      const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
+
       const ext = file.name.split('.').pop() || 'jpg';
       const path = `${user.id}/${Date.now()}.${ext}`;
 
@@ -94,6 +105,9 @@ export default function CameraPage() {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['stamps'] });
       queryClient.invalidateQueries({ queryKey: ['photos'] });
+
+      // Check for newly unlocked rewards
+      checkNewRewards(prevRewardIds);
 
       setStep('done');
       toast.success('写真を投稿しました！スタンプを獲得 🎉');
@@ -298,6 +312,8 @@ export default function CameraPage() {
       )}
 
       <AuthPromptModal open={showAuthModal} onClose={() => { setShowAuthModal(false); navigate('/map'); }} />
+      <ConfettiCanvas active={showCelebration} />
+      <RewardUnlockOverlay rewards={newRewards} open={showCelebration} onClose={dismissCelebration} />
     </div>
   );
 }
