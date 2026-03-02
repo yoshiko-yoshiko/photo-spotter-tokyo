@@ -87,6 +87,12 @@ export default function MapPage() {
       // small delay to let DOM render
       const t = setTimeout(initMap, 100);
       return () => clearTimeout(t);
+    } else {
+      // Cleanup map when switching to list view
+      markersRef.current.forEach(m => m.remove());
+      markersRef.current = [];
+      mapRef.current?.remove();
+      mapRef.current = null;
     }
   }, [viewMode, initMap]);
 
@@ -253,7 +259,7 @@ export default function MapPage() {
           </button>
         </div>
       ) : (
-        <div className="flex-1 min-h-0 overflow-y-auto pb-4 px-3 pt-3">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-4 px-3 pt-3 bg-background">
           {filteredSpots.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">スポットが見つかりません</div>
           ) : (
