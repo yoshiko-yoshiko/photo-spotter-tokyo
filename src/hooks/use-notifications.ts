@@ -13,6 +13,7 @@ export interface Notification {
   actor_id: string | null;
   is_read: boolean;
   created_at: string;
+  spot_id: string | null;
 }
 
 export function useNotifications() {
@@ -50,12 +51,15 @@ export function useNotifications() {
       if (!user) return [];
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('*, photos:photo_id(spot_id)')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(30);
       if (error) throw error;
-      return data as Notification[];
+      return (data || []).map((n: any) => ({
+        ...n,
+        spot_id: n.photos?.spot_id ?? null,
+      })) as Notification[];
     },
     enabled: !!user,
   });

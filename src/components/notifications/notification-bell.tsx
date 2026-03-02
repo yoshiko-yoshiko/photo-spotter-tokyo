@@ -3,6 +3,7 @@ import { Bell, Heart, X } from 'lucide-react';
 import { useNotifications, useUnreadCount, useMarkAsRead } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 export function NotificationBell() {
   const { data: notifications = [] } = useNotifications();
@@ -10,6 +11,14 @@ export function NotificationBell() {
   const markAsRead = useMarkAsRead();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const handleNotificationClick = (n: (typeof notifications)[number]) => {
+    if (n.spot_id) {
+      setOpen(false);
+      navigate(`/spots/${n.spot_id}`);
+    }
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -61,7 +70,8 @@ export function NotificationBell() {
               {notifications.map(n => (
                 <div
                   key={n.id}
-                  className={`flex items-start gap-3 px-4 py-3 transition-colors ${
+                  onClick={() => handleNotificationClick(n)}
+                  className={`flex items-start gap-3 px-4 py-3 transition-colors cursor-pointer hover:bg-muted/50 ${
                     !n.is_read ? 'bg-primary/5' : ''
                   }`}
                 >
