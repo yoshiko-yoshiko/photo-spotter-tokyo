@@ -174,61 +174,58 @@ export default function MapPage() {
   }
 
   return (
-    <div className="relative h-[calc(100dvh-64px)]">
-      {/* Search bar */}
-      <div className="absolute top-3 left-3 right-3 z-10 flex gap-2">
-        <div className="flex-1 bg-card rounded-full shadow-sm border border-border px-4 py-2.5 flex items-center gap-2">
-          <Search className="w-5 h-5 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="スポット名・エリアで検索"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
-          />
+    <div className="relative h-[calc(100dvh-64px)] flex flex-col">
+      {/* Search & filters - compact top bar */}
+      <div className="bg-card/95 backdrop-blur-sm border-b border-border px-3 pt-2 pb-2 space-y-1.5 z-10">
+        <div className="flex gap-2">
+          <div className="flex-1 bg-muted rounded-full px-3 py-2 flex items-center gap-2">
+            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+            <input
+              type="text"
+              placeholder="スポット名・エリアで検索"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+          <div className="bg-muted rounded-lg p-0.5 flex items-center">
+            <button
+              onClick={() => setViewMode('map')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+            >
+              <Map className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
         </div>
-        <div className="bg-card rounded-lg shadow-sm border border-border p-1 flex items-center">
-          <button
-            onClick={() => setViewMode('map')}
-            className={`p-1.5 rounded-md ${viewMode === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-          >
-            <Map className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setViewMode('list')}
-            className={`p-1.5 rounded-md ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
-          >
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Category filter */}
-      <div className="absolute top-16 left-3 right-3 z-10 space-y-2">
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1 overflow-x-auto no-scrollbar">
           {CATEGORIES.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-sm transition-colors ${
+              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 selectedCategory === cat
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground border border-border'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {cat}
             </button>
           ))}
-        </div>
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          <span className="text-border mx-0.5 self-center">|</span>
           {AREAS.map(area => (
             <button
               key={area}
               onClick={() => setSelectedArea(area)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-xs transition-colors ${
+              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
                 selectedArea === area
                   ? 'bg-primary text-primary-foreground'
-                  : 'bg-card text-foreground border border-border'
+                  : 'bg-muted text-muted-foreground'
               }`}
             >
               {area}
@@ -239,24 +236,24 @@ export default function MapPage() {
 
       {/* Info banner */}
       {infoBanner && (
-        <div className="absolute top-32 left-3 right-3 z-10 bg-primary/10 text-primary-dark text-sm px-4 py-2 rounded-lg text-center animate-fade-in">
+        <div className="bg-primary/10 text-primary text-sm px-4 py-1.5 text-center animate-fade-in">
           {infoBanner}
         </div>
       )}
 
+      {/* Map or List - fills remaining space */}
       {viewMode === 'map' ? (
-        <>
+        <div className="relative flex-1 min-h-0">
           <div ref={mapContainer} className="w-full h-full" />
-          {/* Current location button */}
           <button
             onClick={handleLocate}
             className="absolute bottom-6 right-3 z-10 bg-card rounded-full w-12 h-12 shadow-md flex items-center justify-center border border-border"
           >
             <Navigation className="w-5 h-5 text-primary" />
           </button>
-        </>
+        </div>
       ) : (
-        <div className="pt-32 pb-4 px-3 h-full overflow-y-auto">
+        <div className="flex-1 min-h-0 overflow-y-auto pb-4 px-3 pt-3">
           {filteredSpots.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">スポットが見つかりません</div>
           ) : (
