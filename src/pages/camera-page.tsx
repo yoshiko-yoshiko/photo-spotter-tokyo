@@ -117,7 +117,7 @@ export default function CameraPage() {
 
   if (isGuest) {
     return (
-      <div className="min-h-[80dvh] flex flex-col items-center justify-center bg-surface px-4 text-center">
+      <div className="h-[calc(100dvh-64px)] flex flex-col items-center justify-center bg-surface px-4 text-center">
         <Camera className="w-12 h-12 text-muted-foreground mb-4" />
         <h2 className="text-lg font-bold text-foreground">ログインが必要です</h2>
         <p className="text-muted-foreground text-sm mt-2">写真を投稿するにはログインしてください</p>
@@ -127,7 +127,7 @@ export default function CameraPage() {
   }
 
   return (
-    <div className="min-h-[80dvh] bg-surface">
+    <div className="h-[calc(100dvh-64px)] overflow-y-auto bg-surface">
       {/* Header */}
       <div className="bg-card px-4 py-3 flex items-center justify-between border-b border-border">
         <h1 className="text-lg font-bold text-foreground">📷 写真を投稿</h1>
