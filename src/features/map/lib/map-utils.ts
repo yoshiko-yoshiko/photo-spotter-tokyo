@@ -31,6 +31,22 @@ export function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+export function getSpotsBounds(
+  spots: { latitude: number | string; longitude: number | string }[]
+): [[number, number], [number, number]] | null {
+  if (spots.length === 0) return null;
+  let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+  for (const s of spots) {
+    const lng = Number(s.longitude);
+    const lat = Number(s.latitude);
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  return [[minLng, minLat], [maxLng, maxLat]];
+}
+
 export function getRouteUrl(lat: number, lng: number): string {
   const ua = navigator.userAgent;
   if (/iPad|iPhone|iPod/.test(ua)) {

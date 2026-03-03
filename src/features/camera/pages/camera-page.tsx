@@ -4,6 +4,7 @@ import { Camera, ImagePlus, X, MapPin, Upload, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 import { usePhotoUpload } from '@/features/camera/hooks/use-photo-upload';
+import { useUploadGuard } from '@/features/camera/hooks/use-upload-guard';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
 import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
@@ -13,6 +14,36 @@ import type { Step } from '@/features/camera/types';
 const MAX_IMAGE_SIZE_MB = 10;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+
+const MAX_WIDTH = parseInt(import.meta.env.VITE_IMAGE_MAX_WIDTH || '1920');
+const JPEG_QUALITY = parseFloat(import.meta.env.VITE_IMAGE_QUALITY || '0.8');
+
+async function resizeImage(file: File): Promise<File> {
+  const bitmap = await createImageBitmap(file);
+  const { width, height } = bitmap;
+
+  if (width <= MAX_WIDTH && height <= MAX_WIDTH) {
+    bitmap.close();
+    return file;
+  }
+
+  const scale = MAX_WIDTH / Math.max(width, height);
+  const newW = Math.round(width * scale);
+  const newH = Math.round(height * scale);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = newW;
+  canvas.height = newH;
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(bitmap, 0, 0, newW, newH);
+  bitmap.close();
+
+  const blob = await new Promise<Blob>((resolve) =>
+    canvas.toBlob((b) => resolve(b!), 'image/jpeg', JPEG_QUALITY)
+  );
+
+  return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
+}
 
 export default function CameraPage() {
   const navigate = useNavigate();
@@ -44,14 +75,7 @@ export default function CameraPage() {
   }, [preview]);
 
   // Prevent accidental navigation during upload
-  useEffect(() => {
-    if (step !== 'uploading') return;
-    const handler = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-    };
-    window.addEventListener('beforeunload', handler);
-    return () => window.removeEventListener('beforeunload', handler);
-  }, [step]);
+  useUploadGuard(isUploading);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -83,8 +107,9 @@ export default function CameraPage() {
       return;
     }
 
-    setFile(f);
-    setPreview(URL.createObjectURL(f));
+    const resized = await resizeImage(f);
+    setFile(resized);
+    setPreview(URL.createObjectURL(resized));
     setStep('select-spot');
   };
 

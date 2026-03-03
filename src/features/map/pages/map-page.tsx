@@ -4,7 +4,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
-import { isInTokyo, TOKYO_CENTER, CATEGORY_COLORS } from '@/features/map/lib/map-utils';
+import { isInTokyo, TOKYO_CENTER, CATEGORY_COLORS, getSpotsBounds, getDistanceMeters } from '@/features/map/lib/map-utils';
 import { Search, Map, List, Navigation, Camera, Check, Loader2 } from 'lucide-react';
 import type { MapViewMode, SpotCardProps } from '@/features/map/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,6 +34,8 @@ export default function MapPage() {
   const mapContainer = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
+  const spotsRef = useRef(spots);
+  spotsRef.current = spots;
 
   const filteredSpots = spots.filter(spot => {
     const matchSearch = !searchQuery || spot.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -81,6 +83,31 @@ export default function MapPage() {
       const el = document.createElement('div');
       el.className = 'w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow animate-pulse';
       new mapboxgl.Marker({ element: el }).setLngLat([userLoc.longitude, userLoc.latitude]).addTo(map);
+
+      // Pattern A: in Tokyo — check for nearby spots
+      const currentSpots = spotsRef.current;
+      if (currentSpots.length > 0) {
+        let minDist = Infinity;
+        for (const s of currentSpots) {
+          const d = getDistanceMeters(userLoc.latitude, userLoc.longitude, Number(s.latitude), Number(s.longitude));
+          if (d < minDist) minDist = d;
+        }
+        if (minDist <= 1000) {
+          setInfoBanner('📍 近くにスポットがあります！');
+          setTimeout(() => setInfoBanner(''), 3000);
+        }
+      }
+    } else {
+      // Pattern B/C: outside Tokyo or GPS failure — fit to all spots
+      const bounds = getSpotsBounds(spotsRef.current);
+      if (bounds) {
+        map.on('load', () => {
+          map.fitBounds(bounds, {
+            padding: { top: 80, bottom: 120, left: 40, right: 40 },
+            maxZoom: 14,
+          });
+        });
+      }
     }
 
     mapRef.current = map;
@@ -114,14 +141,16 @@ export default function MapPage() {
       const isVisited = stampedSpotIds.has(spot.id);
 
       const el = document.createElement('div');
-      el.style.width = '40px';
-      el.style.height = '40px';
-      el.className = 'relative cursor-pointer';
+      el.style.width = '80px';
+      el.className = 'flex flex-col items-center cursor-pointer';
       el.innerHTML = `
-        <div style="background:${color}" class="w-10 h-10 rounded-full border-2 border-white shadow-md flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+        <div class="relative">
+          <div style="background:${color}" class="w-10 h-10 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
+          </div>
+          ${isVisited ? '<div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' : ''}
         </div>
-        ${isVisited ? '<div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' : ''}
+        <span class="mt-1 text-[10px] font-bold text-slate-700 bg-white/90 px-1.5 py-0.5 rounded shadow-sm whitespace-nowrap max-w-[80px] truncate">${escapeHtml(spot.name)}</span>
       `;
 
       const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '220px', closeButton: false })
@@ -147,7 +176,7 @@ export default function MapPage() {
         }, 10);
       });
 
-      const marker = new mapboxgl.Marker({ element: el })
+      const marker = new mapboxgl.Marker({ element: el, anchor: 'top' })
         .setLngLat([Number(spot.longitude), Number(spot.latitude)])
         .setPopup(popup)
         .addTo(map);

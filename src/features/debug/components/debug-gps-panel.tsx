@@ -2,10 +2,8 @@ import { useDebugGps } from '@/features/debug/hooks/use-debug-gps';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 
 export function DebugGpsPanel() {
-  const { isDebugMode, debugPosition, setPosition } = useDebugGps();
+  const { debugPosition, setPosition } = useDebugGps();
   const { data: spots = [] } = useSpots();
-
-  if (!isDebugMode) return null;
 
   const handleSpotSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const spotId = e.target.value;
@@ -20,7 +18,7 @@ export function DebugGpsPanel() {
   };
 
   return (
-    <div className="bg-red-600 text-white px-3 py-2 text-xs z-50 relative">
+    <div className="bg-red-600 text-white px-3 py-2 text-xs z-[9999] relative">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="font-bold shrink-0">GPS DEBUG ON</span>
         <select

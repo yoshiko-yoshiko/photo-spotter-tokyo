@@ -7,6 +7,20 @@ import { useDebugGps } from '@/features/debug/hooks/use-debug-gps';
 import { getDistanceMeters } from '@/features/map/lib/map-utils';
 import { toast } from 'sonner';
 
+function getGeoPosition(options: PositionOptions): Promise<GeolocationPosition> {
+  return new Promise<GeolocationPosition>((resolve, reject) =>
+    navigator.geolocation.getCurrentPosition(resolve, reject, options)
+  );
+}
+
+async function getPositionWithFallback(): Promise<GeolocationPosition> {
+  try {
+    return await getGeoPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+  } catch {
+    return await getGeoPosition({ enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 });
+  }
+}
+
 export function useCheckin() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -32,8 +46,8 @@ export function useCheckin() {
         .eq('user_id', user.id);
       const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
 
-      // Get current position (respects debug GPS mode)
-      const pos = await getCurrentPosition();
+      // Get current position (debug mode uses mock, otherwise 2-stage fallback)
+      const pos = isDebugMode ? await getCurrentPosition() : await getPositionWithFallback();
 
       // Check distance
       const dist = getDistanceMeters(
@@ -70,20 +84,17 @@ export function useCheckin() {
       }
     } catch (err: unknown) {
       const geoErr = err as GeolocationPositionError | undefined;
+      let msg: string;
       if (geoErr?.code === 1) {
-        const msg = '位置情報の許可が必要です。設定から有効にしてください。';
-        setError(msg);
-        toast.error(msg);
+        msg = '位置情報の許可が必要です。設定から有効にしてください。';
       } else if (geoErr?.code === 2 || geoErr?.code === 3) {
-        const msg = '位置情報を取得できませんでした。再度お試しください。';
-        setError(msg);
-        toast.error(msg);
+        msg = '位置情報を取得できませんでした。電波の良い場所で再度お試しください。';
       } else {
-        const msg = 'チェックインに失敗しました';
-        setError(msg);
-        toast.error(msg);
+        msg = 'チェックインに失敗しました';
         console.error('Checkin error:', err);
       }
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsCheckinLoading(false);
     }
