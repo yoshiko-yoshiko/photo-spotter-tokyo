@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Heart, X } from 'lucide-react';
+import { Bell, Heart, X, Info, Star, Gift } from 'lucide-react';
 import { useNotifications, useUnreadCount, useMarkAsRead } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
@@ -78,9 +78,20 @@ export function NotificationBell() {
                     !n.is_read ? 'bg-primary/5' : ''
                   }`}
                 >
-                  <div className="w-8 h-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <Heart className="w-4 h-4 text-destructive" />
-                  </div>
+                  {(() => {
+                    const iconMap: Record<string, { icon: typeof Heart; bg: string; color: string }> = {
+                      like: { icon: Heart, bg: 'bg-destructive/10', color: 'text-destructive' },
+                      system: { icon: Info, bg: 'bg-primary/10', color: 'text-primary' },
+                      reward: { icon: Gift, bg: 'bg-amber-500/10', color: 'text-amber-500' },
+                      stamp: { icon: Star, bg: 'bg-emerald-500/10', color: 'text-emerald-500' },
+                    };
+                    const { icon: Icon, bg, color } = iconMap[n.type] ?? iconMap.system;
+                    return (
+                      <div className={`w-8 h-8 rounded-full ${bg} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                        <Icon className={`w-4 h-4 ${color}`} />
+                      </div>
+                    );
+                  })()}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground font-medium line-clamp-2">{n.title}</p>
                     {n.body && (
