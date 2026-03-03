@@ -77,19 +77,34 @@ export function useMarkAsRead() {
   return useMutation({
     mutationFn: async (notificationIds?: string[]) => {
       if (!user) return;
-      let query = supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id);
 
-      if (notificationIds) {
-        query = query.in('id', notificationIds);
+      if (notificationIds && notificationIds.length === 1) {
+        // Toggle single notification
+        const target = queryClient.getQueryData<Notification[]>(['notifications', user.id]);
+        const n = target?.find(t => t.id === notificationIds[0]);
+        const newReadState = n ? !n.is_read : true;
+
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: newReadState })
+          .eq('user_id', user.id)
+          .eq('id', notificationIds[0]);
+        if (error) throw error;
+      } else if (notificationIds) {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .in('id', notificationIds);
+        if (error) throw error;
       } else {
-        query = query.eq('is_read', false);
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+        if (error) throw error;
       }
-
-      const { error } = await query;
-      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
