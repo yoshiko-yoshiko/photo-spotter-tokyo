@@ -70,7 +70,7 @@ export default function MapPage() {
       popup.on('open', () => {
         setTimeout(() => {
           document.getElementById(`popup-${spot.id}`)?.addEventListener('click', () => {
-            navigate(`/spots/${spot.id}`);
+            navigate(`/spots/${spot.slug}`);
           });
         }, 10);
       });
@@ -202,7 +202,7 @@ export default function MapPage() {
           ) : (
             <div className="space-y-3">
               {filteredSpots.map(spot => (
-                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(spot.id)} onClick={() => navigate(`/spots/${spot.id}`)} />
+                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(spot.id)} onClick={() => navigate(`/spots/${spot.slug}`)} />
               ))}
             </div>
           )}

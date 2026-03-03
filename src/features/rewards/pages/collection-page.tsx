@@ -105,7 +105,7 @@ export default function CollectionPage() {
             return (
               <button
                 key={spot.id}
-                onClick={() => navigate(`/spots/${spot.id}`)}
+                onClick={() => navigate(`/spots/${spot.slug}`)}
                 className={`rounded-xl overflow-hidden border transition-all ${
                   isCollected ? 'border-primary shadow-sm' : 'border-border opacity-50 grayscale'
                 }`}

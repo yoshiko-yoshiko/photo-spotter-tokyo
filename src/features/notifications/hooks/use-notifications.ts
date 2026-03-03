@@ -39,15 +39,19 @@ export function useNotifications() {
       if (!user) return [];
       const { data, error } = await supabase
         .from('notifications')
-        .select('*, photos:photo_id(spot_id)')
+        .select('*, photos:photo_id(spot_id, spots:spot_id(slug))')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data || []).map((n) => ({
-        ...n,
-        spot_id: (n.photos as { spot_id: string | null } | null)?.spot_id ?? null,
-      })) as Notification[];
+      return (data || []).map((n) => {
+        const photos = n.photos as { spot_id: string | null; spots: { slug: string } | null } | null;
+        return {
+          ...n,
+          spot_id: photos?.spot_id ?? null,
+          spot_slug: photos?.spots?.slug ?? null,
+        };
+      }) as Notification[];
     },
     enabled: !!user,
   });

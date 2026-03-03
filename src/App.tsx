@@ -39,7 +39,7 @@ const App = () => (
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route element={<AppLayout />}>
             <Route path="/map" element={<MapPage />} />
-            <Route path="/spots/:id" element={<SpotDetailPage />} />
+            <Route path="/spots/:slug" element={<SpotDetailPage />} />
             <Route path="/camera" element={<ProtectedRoute><CameraPage /></ProtectedRoute>} />
             <Route path="/collection" element={<ProtectedRoute><CollectionPage /></ProtectedRoute>} />
             <Route path="/profile" element={<ProfilePage />} />

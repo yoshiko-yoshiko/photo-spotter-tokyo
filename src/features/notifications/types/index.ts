@@ -11,6 +11,7 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
   spot_id: string | null;
+  spot_slug: string | null;
 }
 
 export interface NotificationIconConfig {

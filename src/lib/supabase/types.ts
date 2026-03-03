@@ -255,6 +255,7 @@ export type Database = {
           photo_tip: string | null
           qr_code: string | null
           radius_m: number
+          slug: string
           updated_at: string
         }
         Insert: {
@@ -273,6 +274,7 @@ export type Database = {
           photo_tip?: string | null
           qr_code?: string | null
           radius_m?: number
+          slug: string
           updated_at?: string
         }
         Update: {
@@ -291,6 +293,7 @@ export type Database = {
           photo_tip?: string | null
           qr_code?: string | null
           radius_m?: number
+          slug?: string
           updated_at?: string
         }
         Relationships: []

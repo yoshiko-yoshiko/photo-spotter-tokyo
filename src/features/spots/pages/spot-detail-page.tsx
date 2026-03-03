@@ -13,16 +13,16 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 export default function SpotDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
-  const { data: spot, isLoading } = useSpot(id);
+  const { data: spot, isLoading } = useSpot(slug);
   const { data: stamps = [] } = useUserStamps();
   const { isGuest } = useAuth();
   const { checkin, isCheckinLoading, newRewards, showCelebration, dismissCelebration } = useCheckin();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [heroImgError, setHeroImgError] = useState(false);
 
-  const isVisited = stamps.some(s => s.spot_id === id);
+  const isVisited = stamps.some(s => s.spot_id === spot?.id);
 
   if (isLoading) {
     return (

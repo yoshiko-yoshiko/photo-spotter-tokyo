@@ -22,9 +22,9 @@ export function NotificationBell() {
   const hasMore = visibleCount < notifications.length;
 
   const handleNotificationClick = (n: (typeof notifications)[number]) => {
-    if (n.spot_id) {
+    if (n.spot_slug) {
       setOpen(false);
-      navigate(`/spots/${n.spot_id}`);
+      navigate(`/spots/${n.spot_slug}`);
     } else {
       toast.info('該当のスポットが見つかりませんでした');
     }

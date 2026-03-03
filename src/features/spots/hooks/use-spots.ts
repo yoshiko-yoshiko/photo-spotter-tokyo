@@ -16,19 +16,19 @@ export function useSpots() {
   });
 }
 
-export function useSpot(id: string | undefined) {
+export function useSpot(slug: string | undefined) {
   return useQuery({
-    queryKey: ['spots', id],
+    queryKey: ['spots', slug],
     queryFn: async () => {
-      if (!id) throw new Error('No spot ID');
+      if (!slug) throw new Error('No spot slug');
       const { data, error } = await supabase
         .from('spots')
         .select('*')
-        .eq('id', id)
+        .eq('slug', slug)
         .single();
       if (error) throw error;
       return data;
     },
-    enabled: !!id,
+    enabled: !!slug,
   });
 }
