@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Bell, Heart, X, Info, Star, Gift, CheckCheck, ChevronDown } from 'lucide-react';
-import { useNotifications, useUnreadCount, useMarkAsRead } from '@/hooks/use-notifications';
+import { useNotifications, useUnreadCount, useMarkAsRead } from '@/features/notifications/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';

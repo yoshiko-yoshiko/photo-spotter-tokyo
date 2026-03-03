@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/utils/hooks/use-auth';
 
 interface AuthPromptModalProps {
   open: boolean;

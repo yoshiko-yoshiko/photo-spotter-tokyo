@@ -105,7 +105,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border bg-card">
-        <div className="relative aspect-square bg-muted" onClick={handleDoubleTap}>
+        <div className="relative aspect-[4/3] bg-muted" onClick={handleDoubleTap}>
           {!imgError ? (
             <img
               src={photo.image_url}
