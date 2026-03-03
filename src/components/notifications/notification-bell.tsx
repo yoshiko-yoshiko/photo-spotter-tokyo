@@ -125,9 +125,16 @@ export function NotificationBell() {
                       {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ja })}
                     </p>
                   </div>
-                  {!n.is_read && (
-                    <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0 mt-2" />
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAsRead.mutate([n.id]);
+                    }}
+                    className="flex-shrink-0 mt-1.5 p-0.5 rounded-full hover:bg-muted transition-colors"
+                    title={n.is_read ? '既読' : '未読にする'}
+                  >
+                    <div className={`w-2.5 h-2.5 rounded-full border ${!n.is_read ? 'bg-primary border-primary' : 'border-muted-foreground/30'}`} />
+                  </button>
                 </div>
               ))}
 
