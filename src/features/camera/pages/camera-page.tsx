@@ -1,24 +1,26 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ImagePlus, X, MapPin, Upload, Loader2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';
-import { useSpots } from '@/hooks/use-spots';
-import { useQueryClient } from '@tanstack/react-query';
-import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
-import { ConfettiCanvas } from '@/components/rewards/confetti-canvas';
-import { RewardUnlockOverlay } from '@/components/rewards/reward-unlock-overlay';
-import { useRewardUnlock } from '@/hooks/use-reward-unlock';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { useSpots } from '@/features/spots/hooks/use-spots';
+import { usePhotoUpload } from '@/features/camera/hooks/use-photo-upload';
+import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
+import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
+import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
 import { toast } from 'sonner';
 
 type Step = 'select-photo' | 'select-spot' | 'uploading' | 'done';
+
+const MAX_IMAGE_SIZE_MB = 10;
+const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
 
 export default function CameraPage() {
   const navigate = useNavigate();
   const { user, isGuest } = useAuth();
   const { data: spots = [] } = useSpots();
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadPhoto, isUploading, newRewards, showCelebration, dismissCelebration } = usePhotoUpload();
 
   const [step, setStep] = useState<Step>('select-photo');
   const [preview, setPreview] = useState<string | null>(null);
@@ -27,20 +29,61 @@ export default function CameraPage() {
   const [caption, setCaption] = useState('');
   const [spotSearch, setSpotSearch] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const { newRewards, showCelebration, checkNewRewards, dismissCelebration } = useRewardUnlock();
 
   // If guest, show auth modal
   useEffect(() => {
     if (isGuest) setShowAuthModal(true);
   }, [isGuest]);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Revoke objectURL when preview changes or component unmounts
+  useEffect(() => {
+    return () => {
+      if (preview) {
+        URL.revokeObjectURL(preview);
+      }
+    };
+  }, [preview]);
+
+  // Prevent accidental navigation during upload
+  useEffect(() => {
+    if (step !== 'uploading') return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [step]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    if (f.size > 10 * 1024 * 1024) {
-      toast.error('画像サイズは10MB以下にしてください');
+
+    // MIME type validation
+    if (!ALLOWED_MIME_TYPES.includes(f.type)) {
+      toast.error('対応していないファイル形式です。JPEG, PNG, WebP, HEIC の写真を選択してください。');
       return;
     }
+
+    // File size validation
+    if (f.size > MAX_IMAGE_SIZE_BYTES) {
+      toast.error(`画像サイズは${MAX_IMAGE_SIZE_MB}MB以下にしてください`);
+      return;
+    }
+
+    // Image decode validation
+    try {
+      const bitmap = await createImageBitmap(f);
+      if (bitmap.width > 4096 || bitmap.height > 4096) {
+        toast.error('画像サイズが大きすぎます（最大4096x4096px）');
+        bitmap.close();
+        return;
+      }
+      bitmap.close();
+    } catch {
+      toast.error('この画像ファイルは読み込めません。別の写真を選択してください。');
+      return;
+    }
+
     setFile(f);
     setPreview(URL.createObjectURL(f));
     setStep('select-spot');
@@ -51,69 +94,13 @@ export default function CameraPage() {
   );
 
   const handleUpload = async () => {
-    if (!user || !file || !selectedSpotId) return;
+    if (!file || !selectedSpotId) return;
     setStep('uploading');
 
     try {
-      // Capture current reward IDs before stamp creation
-      const { data: prevRewards } = await supabase
-        .from('user_rewards')
-        .select('reward_id')
-        .eq('user_id', user.id);
-      const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
-
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${user.id}/${Date.now()}.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('photos')
-        .upload(path, file, { contentType: file.type });
-
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('photos')
-        .getPublicUrl(path);
-
-      const { data: photo, error: photoError } = await supabase
-        .from('photos')
-        .insert({
-          user_id: user.id,
-          spot_id: selectedSpotId,
-          image_url: publicUrl,
-          storage_path: path,
-          caption: caption.trim() || null,
-          is_public: true,
-        })
-        .select()
-        .single();
-
-      if (photoError) throw photoError;
-
-      // Create stamp
-      const { error: stampError } = await supabase
-        .from('stamps')
-        .insert({
-          user_id: user.id,
-          spot_id: selectedSpotId,
-          photo_id: photo.id,
-          method: 'photo',
-        });
-
-      if (stampError && !stampError.message.includes('duplicate')) throw stampError;
-
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['stamps'] });
-      queryClient.invalidateQueries({ queryKey: ['photos'] });
-
-      // Check for newly unlocked rewards
-      checkNewRewards(prevRewardIds);
-
+      await uploadPhoto(file, selectedSpotId, caption);
       setStep('done');
-      toast.success('写真を投稿しました！スタンプを獲得 🎉');
-    } catch (err: any) {
-      console.error('Upload error:', err);
-      toast.error('アップロードに失敗しました');
+    } catch {
       setStep('select-spot');
     }
   };
@@ -146,7 +133,7 @@ export default function CameraPage() {
       <div className="bg-card px-4 py-3 flex items-center justify-between border-b border-border">
         <h1 className="text-lg font-bold text-foreground">📷 写真を投稿</h1>
         {step !== 'select-photo' && step !== 'uploading' && (
-          <button onClick={resetFlow} className="text-muted-foreground">
+          <button onClick={resetFlow} aria-label="リセット" className="text-muted-foreground">
             <X className="w-5 h-5" />
           </button>
         )}
@@ -222,13 +209,18 @@ export default function CameraPage() {
           )}
 
           {/* Caption */}
-          <input
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder="キャプションを追加..."
-            maxLength={100}
-            className="w-full rounded-lg border border-border px-3 py-2.5 text-sm bg-card focus:ring-2 focus:ring-primary focus:outline-none mb-4"
-          />
+          <div className="mb-4">
+            <input
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              placeholder="キャプションを追加..."
+              maxLength={200}
+              className="w-full rounded-lg border border-border px-3 py-2.5 text-sm bg-card focus:ring-2 focus:ring-primary focus:outline-none"
+            />
+            <p className={`text-xs text-right mt-1 ${caption.length >= 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>
+              {caption.length}/200
+            </p>
+          </div>
 
           {/* Spot selection */}
           <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-1.5">

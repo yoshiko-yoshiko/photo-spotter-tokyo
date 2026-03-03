@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/utils/hooks/use-auth';
 
 export default function SplashPage() {
   const [fadeOut, setFadeOut] = useState(false);
@@ -13,7 +13,8 @@ export default function SplashPage() {
     const timer = setTimeout(() => setFadeOut(true), 1200);
     const nav = setTimeout(() => {
       if (session) {
-        navigate('/map', { replace: true });
+        const onboardingDone = localStorage.getItem('photo_spotter_onboarding_done') === 'true';
+        navigate(onboardingDone ? '/map' : '/onboarding', { replace: true });
       } else {
         navigate('/login', { replace: true });
       }

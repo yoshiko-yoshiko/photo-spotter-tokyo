@@ -2,22 +2,28 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useSpots } from '@/hooks/use-spots';
-import { useUserStamps } from '@/hooks/use-user-stamps';
-import { isInTokyo, TOKYO_CENTER, CATEGORY_COLORS } from '@/lib/map-utils';
-import { Search, Map, List, Navigation, Camera, Check } from 'lucide-react';
+import { useSpots } from '@/features/spots/hooks/use-spots';
+import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
+import { isInTokyo, TOKYO_CENTER, CATEGORY_COLORS } from '@/features/map/lib/map-utils';
+import { Search, Map, List, Navigation, Camera, Check, Loader2 } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { env } from '@/utils/lib/env';
 
 type Spot = Tables<'spots'>;
 
-const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || 'pk.eyJ1IjoiYWl1ZW83MDAiLCJhIjoiY21tOHltNWtmMDBrYjJxcjF4ZnEwZm5mbiJ9.e-oiko54ypgPjtZWIIudug';
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+const MAPBOX_TOKEN = env.MAPBOX_TOKEN;
 
 const CATEGORIES = ['全て', 'ランドマーク', '寺社・歴史', '自然・公園', '都市・カルチャー'] as const;
 const AREAS = ['全エリア', '港区', '台東区', '渋谷区', '墨田区', '千代田区', '新宿区'] as const;
 
 export default function MapPage() {
   const navigate = useNavigate();
-  const { data: spots = [] } = useSpots();
+  const { data: spots = [], isLoading } = useSpots();
   const { data: stamps = [] } = useUserStamps();
   const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
 
@@ -122,13 +128,13 @@ export default function MapPage() {
 
       const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '220px', closeButton: false })
         .setHTML(`
-          <div class="cursor-pointer" id="popup-${spot.id}">
-            <img src="${spot.image_url || ''}" alt="${spot.name}" class="w-full aspect-video object-cover rounded-t-lg" onerror="this.style.display='none'" />
+          <div class="cursor-pointer" id="popup-${escapeHtml(spot.id)}">
+            <img src="${escapeHtml(spot.image_url || '')}" alt="${escapeHtml(spot.name)}" class="w-full aspect-video object-cover rounded-t-lg" onerror="this.style.display='none'" />
             <div class="p-2">
-              <p class="text-sm font-bold text-slate-800 truncate">${spot.name}</p>
+              <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(spot.name)}</p>
               <div class="flex items-center gap-1 mt-1">
-                <span class="text-xs px-1.5 py-0.5 rounded-full" style="background:${color}20;color:${color}">${spot.category}</span>
-                <span class="text-xs text-slate-500">${spot.area}</span>
+                <span class="text-xs px-1.5 py-0.5 rounded-full" style="background:${color}20;color:${color}">${escapeHtml(spot.category)}</span>
+                <span class="text-xs text-slate-500">${escapeHtml(spot.area || '')}</span>
               </div>
               <p class="text-xs text-teal-600 font-medium mt-1.5">詳細を見る →</p>
             </div>
@@ -199,12 +205,14 @@ export default function MapPage() {
           <div className="bg-muted rounded-lg p-0.5 flex items-center">
             <button
               onClick={() => setViewMode('map')}
+              aria-label="地図表示に切替"
               className={`p-1.5 rounded-md transition-colors ${viewMode === 'map' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
             >
               <Map className="w-4 h-4" />
             </button>
             <button
               onClick={() => setViewMode('list')}
+              aria-label="リスト表示に切替"
               className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}
             >
               <List className="w-4 h-4" />
@@ -253,8 +261,14 @@ export default function MapPage() {
       {viewMode === 'map' ? (
         <div className="relative flex-1 min-h-0">
           <div ref={mapContainer} className="w-full h-full" />
+          {isLoading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          )}
           <button
             onClick={handleLocate}
+            aria-label="現在地に移動"
             className="absolute bottom-6 right-3 z-10 bg-card rounded-full w-12 h-12 shadow-md flex items-center justify-center border border-border"
           >
             <Navigation className="w-5 h-5 text-primary" />
@@ -262,7 +276,19 @@ export default function MapPage() {
         </div>
       ) : (
         <div className="flex-1 min-h-0 overflow-y-auto pb-4 px-3 pt-3 bg-background">
-          {filteredSpots.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="bg-card rounded-xl border border-border overflow-hidden">
+                  <Skeleton className="w-full aspect-video" />
+                  <div className="p-3 space-y-2">
+                    <Skeleton className="h-5 w-3/4" />
+                    <Skeleton className="h-4 w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredSpots.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">スポットが見つかりません</div>
           ) : (
             <div className="space-y-3">
@@ -279,15 +305,22 @@ export default function MapPage() {
 
 function SpotCard({ spot, isVisited, onClick }: { spot: Spot; isVisited: boolean; onClick: () => void }) {
   const color = CATEGORY_COLORS[spot.category] || '#0D9488';
+  const [imgError, setImgError] = useState(false);
   return (
     <div onClick={onClick} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
       <div className="relative">
-        <img
-          src={spot.image_url || ''}
-          alt={spot.name}
-          className="w-full aspect-video object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-        />
+        {!imgError && spot.image_url ? (
+          <img
+            src={spot.image_url}
+            alt={spot.name}
+            className="w-full aspect-video object-cover"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <div className="w-full aspect-video bg-muted flex items-center justify-center">
+            <Camera className="w-8 h-8 text-muted-foreground/30" />
+          </div>
+        )}
         {isVisited && (
           <span className="absolute top-3 right-3 bg-stamp-gold text-primary-foreground text-xs px-2 py-1 rounded-full font-medium flex items-center gap-1">
             <Check className="w-3 h-3" /> 訪問済み

@@ -1,7 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { Camera } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/utils/hooks/use-auth';
 import { useEffect } from 'react';
+import { toast } from 'sonner';
 
 export default function LoginPage() {
   const { signInWithGoogle, signInAsGuest, session, loading } = useAuth();
@@ -17,9 +18,11 @@ export default function LoginPage() {
   const handleGuest = async () => {
     try {
       await signInAsGuest();
-      navigate('/map', { replace: true });
+      const onboardingDone = localStorage.getItem('photo_spotter_onboarding_done') === 'true';
+      navigate(onboardingDone ? '/map' : '/onboarding', { replace: true });
     } catch (e) {
       console.error('Guest login error:', e);
+      toast.error('ゲストログインに失敗しました。もう一度お試しください。');
     }
   };
 

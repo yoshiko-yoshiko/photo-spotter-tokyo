@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/utils/hooks/use-auth';
 
 export function useSpotPhotos(spotId: string | undefined) {
   const { user } = useAuth();

@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSpots } from '@/hooks/use-spots';
-import { useUserStamps } from '@/hooks/use-user-stamps';
-import { useAuth } from '@/hooks/use-auth';
-import { useRewards, useUserRewards } from '@/hooks/use-rewards';
-import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
-import { RewardDetailModal } from '@/components/rewards/reward-detail-modal';
-import { CATEGORY_COLORS } from '@/lib/map-utils';
+import { useSpots } from '@/features/spots/hooks/use-spots';
+import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
+import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
+import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
+import { CATEGORY_COLORS } from '@/features/map/lib/map-utils';
 import { Camera, Gift, Lock, Check, Trophy, Ticket } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
 
 export default function CollectionPage() {
   const navigate = useNavigate();
   const { user, isGuest } = useAuth();
-  const { data: spots = [] } = useSpots();
-  const { data: stamps = [] } = useUserStamps();
-  const { data: rewards = [] } = useRewards();
-  const { data: userRewards = [] } = useUserRewards();
+  const { data: spots = [], isLoading: spotsLoading } = useSpots();
+  const { data: stamps = [], isLoading: stampsLoading } = useUserStamps();
+  const { data: rewards = [], isLoading: rewardsLoading } = useRewards();
+  const { data: userRewards = [], isLoading: userRewardsLoading } = useUserRewards();
+  const isLoading = spotsLoading || stampsLoading || rewardsLoading || userRewardsLoading;
   const [tab, setTab] = useState<'stamps' | 'rewards'>('stamps');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
@@ -83,7 +85,19 @@ export default function CollectionPage() {
       </div>
 
       {/* Stamps Grid */}
-      {tab === 'stamps' && (
+      {tab === 'stamps' && isLoading && (
+        <div className="px-3 pt-4 grid grid-cols-3 gap-2">
+          {[1, 2, 3, 4, 5, 6].map(i => (
+            <div key={i} className="rounded-xl overflow-hidden border border-border">
+              <Skeleton className="aspect-square w-full" />
+              <div className="p-1.5 bg-card">
+                <Skeleton className="h-3 w-full" />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {tab === 'stamps' && !isLoading && (
         <div className="px-3 pt-4 grid grid-cols-3 gap-2">
           {spots.map(spot => {
             const isCollected = stampedSpotIds.has(spot.id);

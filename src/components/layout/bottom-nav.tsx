@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Camera, Grid3X3, User } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 
 const tabs = [
   { path: '/map', icon: MapPin, label: '探す' },
@@ -27,7 +27,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg h-16 md:max-w-[390px] md:mx-auto">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card border-t border-border shadow-lg h-16 pb-[env(safe-area-inset-bottom)] md:max-w-[390px] md:mx-auto">
         <div className="flex justify-around items-center h-full">
           {tabs.map((tab) => {
             const isActive = location.pathname === tab.path;
@@ -38,6 +38,7 @@ export function BottomNav() {
                 <button
                   key={tab.path}
                   onClick={() => handleTab(tab.path, true)}
+                  aria-label={tab.label}
                   className="flex flex-col items-center -mt-4"
                 >
                   <div className="bg-accent rounded-full w-14 h-14 flex items-center justify-center shadow-lg">
@@ -52,6 +53,7 @@ export function BottomNav() {
               <button
                 key={tab.path}
                 onClick={() => handleTab(tab.path)}
+                aria-label={tab.label}
                 className="flex flex-col items-center gap-0.5"
               >
                 <Icon className={`w-6 h-6 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />

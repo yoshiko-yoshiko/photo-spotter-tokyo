@@ -1,37 +1,26 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
-import { PhotoGallery } from '@/components/photos/photo-gallery';
-import { useSpot } from '@/hooks/use-spots';
-import { useUserStamps } from '@/hooks/use-user-stamps';
-import { useAuth } from '@/hooks/use-auth';
-import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
-import { ConfettiCanvas } from '@/components/rewards/confetti-canvas';
-import { RewardUnlockOverlay } from '@/components/rewards/reward-unlock-overlay';
-import { useRewardUnlock } from '@/hooks/use-reward-unlock';
-import { CATEGORY_COLORS, getRouteUrl } from '@/lib/map-utils';
+import { PhotoGallery } from '@/features/photos/components/photo-gallery';
+import { useSpot } from '@/features/spots/hooks/use-spots';
+import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { useCheckin } from '@/features/spots/hooks/use-checkin';
+import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
+import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
+import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
+import { CATEGORY_COLORS, getRouteUrl } from '@/features/map/lib/map-utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { useQueryClient } from '@tanstack/react-query';
-
-function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
 
 export default function SpotDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: spot, isLoading } = useSpot(id);
   const { data: stamps = [] } = useUserStamps();
-  const { user, isGuest } = useAuth();
-  const queryClient = useQueryClient();
+  const { isGuest } = useAuth();
+  const { checkin, isCheckinLoading, newRewards, showCelebration, dismissCelebration } = useCheckin();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [checkingIn, setCheckingIn] = useState(false);
-  const { newRewards, showCelebration, checkNewRewards, dismissCelebration } = useRewardUnlock();
+  const [heroImgError, setHeroImgError] = useState(false);
 
   const isVisited = stamps.some(s => s.spot_id === id);
 
@@ -59,67 +48,9 @@ export default function SpotDetailPage() {
       setShowAuthModal(true);
       return;
     }
-    if (isVisited || !user) return;
+    if (isVisited) return;
 
-    setCheckingIn(true);
-    try {
-      // Capture current reward IDs before stamp creation
-      const { data: prevRewards } = await supabase
-        .from('user_rewards')
-        .select('reward_id')
-        .eq('user_id', user.id);
-      const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
-
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0,
-        })
-      );
-
-      const dist = getDistanceMeters(
-        pos.coords.latitude, pos.coords.longitude,
-        Number(spot.latitude), Number(spot.longitude)
-      );
-
-      if (dist > spot.radius_m) {
-        toast.error(`スポットから${Math.round(dist)}m離れています（${spot.radius_m}m以内でチェックインできます）`);
-        setCheckingIn(false);
-        return;
-      }
-
-      const { error } = await supabase
-        .from('stamps')
-        .insert({
-          user_id: user.id,
-          spot_id: spot.id,
-          method: 'gps',
-        });
-
-      if (error) {
-        if (error.message.includes('duplicate')) {
-          toast.info('すでにチェックイン済みです');
-        } else {
-          throw error;
-        }
-      } else {
-        toast.success('チェックイン成功！スタンプを獲得 🎉');
-        queryClient.invalidateQueries({ queryKey: ['stamps'] });
-        // Check for newly unlocked rewards
-        checkNewRewards(prevRewardIds);
-      }
-    } catch (err: any) {
-      if (err?.code === 1) {
-        toast.error('位置情報の許可が必要です。設定から有効にしてください。');
-      } else if (err?.code === 2 || err?.code === 3) {
-        toast.error('位置情報を取得できませんでした。再度お試しください。');
-      } else {
-        toast.error('チェックインに失敗しました');
-        console.error('Checkin error:', err);
-      }
-    }
-    setCheckingIn(false);
+    await checkin(spot.id, Number(spot.latitude), Number(spot.longitude), spot.radius_m);
   };
 
   const handleShare = async () => {
@@ -140,9 +71,9 @@ export default function SpotDetailPage() {
       {/* Hero */}
       <div className="relative">
         <div className="w-full aspect-[4/3] bg-muted overflow-hidden">
-          {spot.image_url ? (
+          {!heroImgError && spot.image_url ? (
             <img src={spot.image_url} alt={spot.name} className="w-full h-full object-cover"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+              onError={() => setHeroImgError(true)} />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Camera className="w-12 h-12 text-muted-foreground/30" />
@@ -151,6 +82,7 @@ export default function SpotDetailPage() {
         </div>
 
         <button onClick={() => navigate(-1)}
+          aria-label="戻る"
           className="absolute top-4 left-4 bg-card/80 backdrop-blur rounded-full w-10 h-10 shadow-sm flex items-center justify-center">
           <ChevronLeft className="w-5 h-5 text-foreground" />
         </button>
@@ -162,6 +94,7 @@ export default function SpotDetailPage() {
         )}
 
         <button onClick={handleShare}
+          aria-label="共有"
           className="absolute top-4 right-4 bg-card/80 backdrop-blur rounded-full w-10 h-10 shadow-sm flex items-center justify-center">
           <Share2 className="w-5 h-5 text-foreground" />
         </button>
@@ -213,26 +146,36 @@ export default function SpotDetailPage() {
       </div>
 
       {/* CTA */}
-      <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-[358px] md:mx-auto">
-        <button
-          onClick={handleCheckin}
-          disabled={isVisited || checkingIn}
-          className={`w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 ${
-            isVisited
-              ? 'bg-muted text-muted-foreground cursor-not-allowed'
-              : checkingIn
-              ? 'bg-accent/70 text-accent-foreground cursor-wait'
-              : 'bg-accent hover:bg-accent-light text-accent-foreground'
-          }`}
-        >
-          {checkingIn ? (
-            <><Loader2 className="w-5 h-5 animate-spin" /> 位置を確認中...</>
-          ) : isVisited ? (
-            '✓ チェックイン済み'
-          ) : (
-            '📍 GPSチェックイン'
-          )}
-        </button>
+      <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-[358px] md:mx-auto space-y-2">
+        {isVisited ? (
+          <>
+            <div className="flex items-center justify-center gap-2 text-sm text-stamp-gold font-bold bg-stamp-gold/10 border border-stamp-gold/20 rounded-full px-4 py-2">
+              <Check className="w-4 h-4" /> スタンプ取得済み
+            </div>
+            <button
+              onClick={() => navigate(`/camera?spot=${spot.id}`)}
+              className="w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
+            >
+              <Camera className="w-5 h-5" /> もう一枚撮る
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={handleCheckin}
+            disabled={isCheckinLoading}
+            className={`w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 ${
+              isCheckinLoading
+                ? 'bg-accent/70 text-accent-foreground cursor-wait'
+                : 'bg-accent hover:bg-accent-light text-accent-foreground'
+            }`}
+          >
+            {isCheckinLoading ? (
+              <><Loader2 className="w-5 h-5 animate-spin" /> 位置を確認中...</>
+            ) : (
+              '📍 GPSチェックイン'
+            )}
+          </button>
+        )}
       </div>
 
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />

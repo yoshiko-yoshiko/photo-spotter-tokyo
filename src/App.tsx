@@ -3,15 +3,16 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppLayout } from "@/components/layout/app-layout";
-import SplashPage from "@/pages/splash-page";
-import LoginPage from "@/pages/login-page";
-import OnboardingPage from "@/pages/onboarding-page";
-import MapPage from "@/pages/map-page";
-import CameraPage from "@/pages/camera-page";
-import CollectionPage from "@/pages/collection-page";
-import ProfilePage from "@/pages/profile-page";
-import SpotDetailPage from "@/pages/spot-detail-page";
+import SplashPage from "@/features/auth/pages/splash-page";
+import LoginPage from "@/features/auth/pages/login-page";
+import OnboardingPage from "@/features/auth/pages/onboarding-page";
+import MapPage from "@/features/map/pages/map-page";
+import CameraPage from "@/features/camera/pages/camera-page";
+import CollectionPage from "@/features/rewards/pages/collection-page";
+import ProfilePage from "@/features/profile/pages/profile-page";
+import SpotDetailPage from "@/features/spots/pages/spot-detail-page";
 import NotFound from "@/pages/NotFound";
+import { ProtectedRoute } from "@/features/auth/components/protected-route";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,8 +37,8 @@ const App = () => (
         <Route element={<AppLayout />}>
           <Route path="/map" element={<MapPage />} />
           <Route path="/spots/:id" element={<SpotDetailPage />} />
-          <Route path="/camera" element={<CameraPage />} />
-          <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/camera" element={<ProtectedRoute><CameraPage /></ProtectedRoute>} />
+          <Route path="/collection" element={<ProtectedRoute><CollectionPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProfilePage />} />
         </Route>
         <Route path="*" element={<NotFound />} />

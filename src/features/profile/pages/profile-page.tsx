@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, LogOut, Info, Edit2, Camera, MapPin, Award, Flame } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { useRewards, useUserRewards } from '@/hooks/use-rewards';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { supabase } from '@/integrations/supabase/client';
-import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
-import { RewardDetailModal } from '@/components/rewards/reward-detail-modal';
+import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
+import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/integrations/supabase/types';
-import { NotificationBell } from '@/components/notifications/notification-bell';
+import { NotificationBell } from '@/features/notifications/components/notification-bell';
 
 interface ProfileStats {
   stampCount: number;
@@ -25,6 +26,8 @@ export default function ProfilePage() {
   const [newName, setNewName] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
+  const [totalSpots, setTotalSpots] = useState(10);
+  const [loading, setLoading] = useState(true);
 
   const { data: allRewards } = useRewards();
   const { data: userRewards } = useUserRewards();
@@ -45,7 +48,8 @@ export default function ProfilePage() {
       supabase.from('stamps').select('id, spot_id').eq('user_id', user.id),
       supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null),
       supabase.from('user_rewards').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    ]).then(([stampsRes, photosRes, rewardsRes]) => {
+      supabase.from('spots').select('id', { count: 'exact', head: true }),
+    ]).then(([stampsRes, photosRes, rewardsRes, spotsRes]) => {
       const stamps = stampsRes.data || [];
       const uniqueSpots = new Set(stamps.map(s => s.spot_id));
       setStats({
@@ -54,6 +58,8 @@ export default function ProfilePage() {
         spotCount: uniqueSpots.size,
         rewardCount: rewardsRes.count || 0,
       });
+      if (spotsRes.count != null) setTotalSpots(spotsRes.count);
+      setLoading(false);
     });
   }, [user]);
 
@@ -119,25 +125,37 @@ export default function ProfilePage() {
       )}
 
       {/* Stats grid */}
-      <div className="mx-4 mt-4 grid grid-cols-4 gap-2">
-        {statItems.map(({ icon: Icon, label, value, color }) => (
-          <div key={label} className="bg-card border border-border rounded-2xl p-3 text-center">
-            <Icon className={`w-5 h-5 mx-auto ${color}`} />
-            <p className="text-xl font-bold text-foreground mt-1">{value}</p>
-            <p className="text-[10px] text-muted-foreground">{label}</p>
-          </div>
-        ))}
-      </div>
+      {loading ? (
+        <div className="mx-4 mt-4 grid grid-cols-4 gap-2">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-card border border-border rounded-2xl p-3 text-center">
+              <Skeleton className="w-5 h-5 mx-auto rounded-full" />
+              <Skeleton className="h-6 w-10 mx-auto mt-1" />
+              <Skeleton className="h-3 w-12 mx-auto mt-1" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="mx-4 mt-4 grid grid-cols-4 gap-2">
+          {statItems.map(({ icon: Icon, label, value, color }) => (
+            <div key={label} className="bg-card border border-border rounded-2xl p-3 text-center">
+              <Icon className={`w-5 h-5 mx-auto ${color}`} />
+              <p className="text-xl font-bold text-foreground mt-1">{value}</p>
+              <p className="text-[10px] text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Stamp progress */}
       <div className="mx-4 mt-4 p-4 rounded-2xl bg-card border border-border">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-lg font-bold text-foreground">{stats.stampCount} / 10 スタンプ</span>
+          <span className="text-lg font-bold text-foreground">{stats.stampCount} / {totalSpots} スタンプ</span>
         </div>
         <div className="bg-muted rounded-full h-3 overflow-hidden">
           <div
             className="bg-primary rounded-full h-3 transition-all duration-500"
-            style={{ width: `${Math.min((stats.stampCount / 10) * 100, 100)}%` }}
+            style={{ width: `${totalSpots > 0 ? Math.min((stats.stampCount / totalSpots) * 100, 100) : 0}%` }}
           />
         </div>
         <button
