@@ -4,6 +4,7 @@ import { useNotifications, useUnreadCount, useMarkAsRead } from '@/hooks/use-not
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function NotificationBell() {
   const { data: notifications = [] } = useNotifications();
@@ -17,6 +18,8 @@ export function NotificationBell() {
     if (n.spot_id) {
       setOpen(false);
       navigate(`/spots/${n.spot_id}`);
+    } else {
+      toast.info('該当のスポットが見つかりませんでした');
     }
   };
 
