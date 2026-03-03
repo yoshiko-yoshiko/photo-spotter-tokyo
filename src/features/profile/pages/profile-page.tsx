@@ -10,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/lib/supabase/types';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
 import type { ProfileStats, UserProfile } from '../types';
+import { LIMITS } from '@/lib/constants';
 
 export default function ProfilePage() {
   const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
@@ -230,10 +231,10 @@ export default function ProfilePage() {
             <input
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              maxLength={15}
+              maxLength={LIMITS.NICKNAME_DISPLAY_MAX}
               className="w-full rounded-lg border border-border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
             />
-            <p className="text-xs text-muted-foreground text-right mt-1">{newName.length}/15</p>
+            <p className="text-xs text-muted-foreground text-right mt-1">{newName.length}/{LIMITS.NICKNAME_DISPLAY_MAX}</p>
             <div className="flex gap-3 mt-4">
               <button onClick={() => setEditingName(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium">
                 キャンセル

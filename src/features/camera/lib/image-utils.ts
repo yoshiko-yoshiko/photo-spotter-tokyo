@@ -1,4 +1,5 @@
 import { toast } from 'sonner';
+import { LIMITS } from '@/lib/constants';
 
 export const IMAGE_CONFIG = {
   MAX_SIZE_MB: 10,
@@ -7,8 +8,8 @@ export const IMAGE_CONFIG = {
   MAX_WIDTH: parseInt(import.meta.env.VITE_IMAGE_MAX_WIDTH || '1920'),
   JPEG_QUALITY: parseFloat(import.meta.env.VITE_IMAGE_QUALITY || '0.8'),
   ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp', 'image/heic'] as const,
-  CAPTION_MAX_LENGTH: 200,
-  CAPTION_WARN_THRESHOLD: 180,
+  CAPTION_MAX_LENGTH: LIMITS.CAPTION_MAX,
+  CAPTION_WARN_THRESHOLD: LIMITS.CAPTION_WARN_THRESHOLD,
 } as const;
 
 export async function validateImage(file: File): Promise<boolean> {
