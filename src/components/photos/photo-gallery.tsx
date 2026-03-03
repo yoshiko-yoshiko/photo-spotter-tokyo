@@ -1,5 +1,5 @@
-import { useSpotPhotos } from '@/hooks/use-photos';
-import { PhotoCard } from '@/components/photos/photo-card';
+import { useSpotPhotos } from '@/features/photos/hooks/use-photos';
+import { PhotoCard } from '@/features/photos/components/photo-card';
 import { Camera } from 'lucide-react';
 
 interface PhotoGalleryProps {

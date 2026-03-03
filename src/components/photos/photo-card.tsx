@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Heart, MoreVertical, Flag, Ban, X } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { usePhotoLikes, useToggleLike, useReportPhoto, useBlockUser } from '@/hooks/use-photos';
+import { useAuth } from '@/utils/hooks/use-auth';
+import { usePhotoLikes, useToggleLike, useReportPhoto, useBlockUser } from '@/features/photos/hooks/use-photos';
 import { AuthPromptModal } from '@/components/auth/auth-prompt-modal';
 import { toast } from 'sonner';
 import { Tables } from '@/integrations/supabase/types';
@@ -93,7 +93,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border bg-card">
-        <div className="relative aspect-square bg-muted" onClick={handleDoubleTap}>
+        <div className="relative aspect-[4/3] bg-muted" onClick={handleDoubleTap}>
           <img
             src={photo.image_url}
             alt={photo.caption || 'Photo'}
