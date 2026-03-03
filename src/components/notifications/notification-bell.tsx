@@ -1,18 +1,24 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Heart, X, Info, Star, Gift } from 'lucide-react';
+import { Bell, Heart, X, Info, Star, Gift, CheckCheck, ChevronDown } from 'lucide-react';
 import { useNotifications, useUnreadCount, useMarkAsRead } from '@/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
+const PAGE_SIZE = 10;
+
 export function NotificationBell() {
   const { data: notifications = [] } = useNotifications();
   const unreadCount = useUnreadCount();
   const markAsRead = useMarkAsRead();
   const [open, setOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  const visibleNotifications = notifications.slice(0, visibleCount);
+  const hasMore = visibleCount < notifications.length;
 
   const handleNotificationClick = (n: (typeof notifications)[number]) => {
     if (n.spot_id) {
@@ -35,7 +41,13 @@ export function NotificationBell() {
 
   const handleOpen = () => {
     setOpen(!open);
-    if (!open && unreadCount > 0) {
+    if (!open) {
+      setVisibleCount(PAGE_SIZE);
+    }
+  };
+
+  const handleMarkAllRead = () => {
+    if (unreadCount > 0) {
       markAsRead.mutate(undefined);
     }
   };
@@ -58,9 +70,21 @@ export function NotificationBell() {
         <div className="absolute right-0 top-12 w-[320px] max-h-[400px] overflow-y-auto bg-card border border-border rounded-2xl shadow-xl z-50 animate-slide-up">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border">
             <h3 className="text-sm font-bold text-foreground">通知</h3>
-            <button onClick={() => setOpen(false)} className="text-muted-foreground">
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllRead}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                  title="すべて既読にする"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" />
+                  <span>既読</span>
+                </button>
+              )}
+              <button onClick={() => setOpen(false)} className="text-muted-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           {notifications.length === 0 ? (
@@ -70,7 +94,7 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {notifications.map(n => (
+              {visibleNotifications.map(n => (
                 <div
                   key={n.id}
                   onClick={() => handleNotificationClick(n)}
@@ -106,6 +130,16 @@ export function NotificationBell() {
                   )}
                 </div>
               ))}
+
+              {hasMore && (
+                <button
+                  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                  className="w-full flex items-center justify-center gap-1 py-3 text-xs text-primary hover:bg-muted/50 transition-colors"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                  もっと見る（残り{notifications.length - visibleCount}件）
+                </button>
+              )}
             </div>
           )}
         </div>
