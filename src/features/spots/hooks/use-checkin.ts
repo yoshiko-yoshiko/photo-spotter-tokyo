@@ -91,7 +91,6 @@ export function useCheckin() {
         msg = '位置情報を取得できませんでした。電波の良い場所で再度お試しください。';
       } else {
         msg = 'チェックインに失敗しました';
-        console.error('Checkin error:', err);
       }
       setError(msg);
       toast.error(msg);

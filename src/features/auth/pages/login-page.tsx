@@ -20,8 +20,7 @@ export default function LoginPage() {
       await signInAsGuest();
       const onboardingDone = localStorage.getItem('photo_spotter_onboarding_done') === 'true';
       navigate(onboardingDone ? '/map' : '/onboarding', { replace: true });
-    } catch (e) {
-      console.error('Guest login error:', e);
+    } catch {
       toast.error('ゲストログインに失敗しました。もう一度お試しください。');
     }
   };

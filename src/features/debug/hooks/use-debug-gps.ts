@@ -1,11 +1,19 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import type { DebugPosition } from '@/features/debug/types';
 
-const DEBUG_STORAGE_KEY = 'debug_gps_position';
+const DEBUG_MODE_KEY = 'photo_spotter_debug_gps';
+const DEBUG_POSITION_KEY = 'debug_gps_position';
+
+function getStoredDebugMode(): boolean {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('debug') === 'gps') return true;
+  if (import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true') return true;
+  return sessionStorage.getItem(DEBUG_MODE_KEY) === 'true';
+}
 
 function getStoredPosition(): DebugPosition | null {
   try {
-    const stored = sessionStorage.getItem(DEBUG_STORAGE_KEY);
+    const stored = sessionStorage.getItem(DEBUG_POSITION_KEY);
     if (stored) return JSON.parse(stored);
   } catch {
     // ignore
@@ -13,25 +21,24 @@ function getStoredPosition(): DebugPosition | null {
   return null;
 }
 
-function storePosition(pos: DebugPosition) {
-  sessionStorage.setItem(DEBUG_STORAGE_KEY, JSON.stringify(pos));
-}
-
 export function useDebugGps() {
-  const isDebugMode = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('debug') === 'gps') return true;
-    if (import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true') return true;
-    return false;
-  }, []);
+  const [isDebugMode, setIsDebugMode] = useState(getStoredDebugMode);
+  const [debugPosition, setDebugPosition] = useState<DebugPosition | null>(getStoredPosition);
 
-  const [debugPosition, setDebugPosition] = useState<DebugPosition | null>(
-    getStoredPosition
-  );
+  const setDebugMode = useCallback((on: boolean) => {
+    if (on) {
+      sessionStorage.setItem(DEBUG_MODE_KEY, 'true');
+    } else {
+      sessionStorage.removeItem(DEBUG_MODE_KEY);
+      sessionStorage.removeItem(DEBUG_POSITION_KEY);
+      setDebugPosition(null);
+    }
+    setIsDebugMode(on);
+  }, []);
 
   const setPosition = useCallback((pos: DebugPosition) => {
     setDebugPosition(pos);
-    storePosition(pos);
+    sessionStorage.setItem(DEBUG_POSITION_KEY, JSON.stringify(pos));
   }, []);
 
   const getCurrentPosition = useCallback((): Promise<GeolocationPosition> => {
@@ -61,6 +68,7 @@ export function useDebugGps() {
 
   return {
     isDebugMode,
+    setDebugMode,
     debugPosition,
     setPosition,
     getCurrentPosition,

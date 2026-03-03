@@ -5,45 +5,12 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 import { usePhotoUpload } from '@/features/camera/hooks/use-photo-upload';
 import { useUploadGuard } from '@/features/camera/hooks/use-upload-guard';
+import { validateImage, resizeImage } from '@/features/camera/lib/image-utils';
+import { PhotoPreview } from '@/features/camera/components/photo-preview';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
 import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
-import { toast } from 'sonner';
 import type { Step } from '@/features/camera/types';
-
-const MAX_IMAGE_SIZE_MB = 10;
-const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-
-const MAX_WIDTH = parseInt(import.meta.env.VITE_IMAGE_MAX_WIDTH || '1920');
-const JPEG_QUALITY = parseFloat(import.meta.env.VITE_IMAGE_QUALITY || '0.8');
-
-async function resizeImage(file: File): Promise<File> {
-  const bitmap = await createImageBitmap(file);
-  const { width, height } = bitmap;
-
-  if (width <= MAX_WIDTH && height <= MAX_WIDTH) {
-    bitmap.close();
-    return file;
-  }
-
-  const scale = MAX_WIDTH / Math.max(width, height);
-  const newW = Math.round(width * scale);
-  const newH = Math.round(height * scale);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = newW;
-  canvas.height = newH;
-  const ctx = canvas.getContext('2d')!;
-  ctx.drawImage(bitmap, 0, 0, newW, newH);
-  bitmap.close();
-
-  const blob = await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b!), 'image/jpeg', JPEG_QUALITY)
-  );
-
-  return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
-}
 
 export default function CameraPage() {
   const navigate = useNavigate();
@@ -81,31 +48,8 @@ export default function CameraPage() {
     const f = e.target.files?.[0];
     if (!f) return;
 
-    // MIME type validation
-    if (!ALLOWED_MIME_TYPES.includes(f.type)) {
-      toast.error('対応していないファイル形式です。JPEG, PNG, WebP, HEIC の写真を選択してください。');
-      return;
-    }
-
-    // File size validation
-    if (f.size > MAX_IMAGE_SIZE_BYTES) {
-      toast.error(`画像サイズは${MAX_IMAGE_SIZE_MB}MB以下にしてください`);
-      return;
-    }
-
-    // Image decode validation
-    try {
-      const bitmap = await createImageBitmap(f);
-      if (bitmap.width > 4096 || bitmap.height > 4096) {
-        toast.error('画像サイズが大きすぎます（最大4096x4096px）');
-        bitmap.close();
-        return;
-      }
-      bitmap.close();
-    } catch {
-      toast.error('この画像ファイルは読み込めません。別の写真を選択してください。');
-      return;
-    }
+    const valid = await validateImage(f);
+    if (!valid) return;
 
     const resized = await resizeImage(f);
     setFile(resized);
@@ -136,6 +80,12 @@ export default function CameraPage() {
     setSelectedSpotId(null);
     setCaption('');
     setSpotSearch('');
+  };
+
+  const handleRetake = () => {
+    setStep('select-photo');
+    setPreview(null);
+    setFile(null);
   };
 
   const selectedSpot = spots.find(s => s.id === selectedSpotId);
@@ -219,32 +169,14 @@ export default function CameraPage() {
       {/* Step: Select Spot */}
       {step === 'select-spot' && (
         <div className="px-4">
-          {/* Preview */}
           {preview && (
-            <div className="relative mb-4">
-              <img src={preview} alt="Preview" className="w-full aspect-[4/3] object-cover rounded-xl" />
-              <button
-                onClick={() => { setStep('select-photo'); setPreview(null); setFile(null); }}
-                className="absolute top-2 right-2 bg-card/80 backdrop-blur rounded-full w-8 h-8 flex items-center justify-center"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Caption */}
-          <div className="mb-4">
-            <input
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              placeholder="キャプションを追加..."
-              maxLength={200}
-              className="w-full rounded-lg border border-border px-3 py-2.5 text-sm bg-card focus:ring-2 focus:ring-primary focus:outline-none"
+            <PhotoPreview
+              previewUrl={preview}
+              caption={caption}
+              onCaptionChange={setCaption}
+              onRetake={handleRetake}
             />
-            <p className={`text-xs text-right mt-1 ${caption.length >= 180 ? 'text-orange-500' : 'text-muted-foreground'}`}>
-              {caption.length}/200
-            </p>
-          </div>
+          )}
 
           {/* Spot selection */}
           <h3 className="text-base font-bold text-foreground mb-2 flex items-center gap-1.5">

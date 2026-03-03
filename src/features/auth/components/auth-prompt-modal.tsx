@@ -25,8 +25,7 @@ export function AuthPromptModal({ open, onClose }: AuthPromptModalProps) {
       } else {
         await signInWithGoogle();
       }
-    } catch (e) {
-      console.error('Login error:', e);
+    } catch {
       toast.error('ログインに失敗しました。もう一度お試しください。');
     }
   };

@@ -80,7 +80,6 @@ export function usePhotoUpload() {
 
       toast.success('写真を投稿しました！スタンプを獲得 🎉');
     } catch (err: unknown) {
-      console.error('Upload error:', err);
       const msg = 'アップロードに失敗しました';
       setError(msg);
       toast.error(msg);

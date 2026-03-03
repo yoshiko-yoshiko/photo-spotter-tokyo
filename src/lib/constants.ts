@@ -1,0 +1,15 @@
+/** アプリ全体で使う定数。マジックナンバーを排除する */
+
+export const TIMING = {
+  SPLASH_FADE_MS: 1200,
+  SPLASH_NAVIGATE_MS: 1700,
+  TOAST_DURATION_MS: 3000,
+  POPUP_CLICK_DELAY_MS: 10,
+} as const;
+
+export const LIMITS = {
+  NICKNAME_DISPLAY_MAX: 15,
+  NICKNAME_INPUT_MAX: 20,
+  CAPTION_MAX: 200,
+  CAPTION_WARN_THRESHOLD: 180,
+} as const;

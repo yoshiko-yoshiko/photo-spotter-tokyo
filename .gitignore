@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 .env.*.local
+
+# Supabase local (SQL migrations/seeds are managed locally, not in git)
+supabase/
