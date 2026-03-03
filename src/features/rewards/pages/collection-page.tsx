@@ -48,7 +48,7 @@ export default function CollectionPage() {
   return (
     <div className="bg-surface min-h-full pb-4">
       {/* Header */}
-      <div className="bg-card px-4 pt-6 pb-4 border-b border-border">
+      <div className="bg-card px-4 md:px-8 pt-6 pb-4 border-b border-border max-w-4xl mx-auto">
         <h1 className="text-xl font-bold text-foreground">📒 コレクション</h1>
         <div className="mt-3">
           <div className="flex justify-between items-center mb-1">
@@ -62,7 +62,7 @@ export default function CollectionPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border bg-card">
+      <div className="flex border-b border-border bg-card max-w-4xl mx-auto">
         <button
           onClick={() => setTab('stamps')}
           className={`flex-1 py-3 text-sm font-medium text-center transition-colors ${
@@ -86,7 +86,7 @@ export default function CollectionPage() {
 
       {/* Stamps Grid */}
       {tab === 'stamps' && isLoading && (
-        <div className="px-3 pt-4 grid grid-cols-3 gap-2">
+        <div className="px-3 md:px-8 pt-4 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-w-4xl mx-auto">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="rounded-xl overflow-hidden border border-border">
               <Skeleton className="aspect-square w-full" />
@@ -98,7 +98,7 @@ export default function CollectionPage() {
         </div>
       )}
       {tab === 'stamps' && !isLoading && (
-        <div className="px-3 pt-4 grid grid-cols-3 gap-2">
+        <div className="px-3 md:px-8 pt-4 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-w-4xl mx-auto">
           {spots.map(spot => {
             const isCollected = stampedSpotIds.has(spot.id);
             const color = CATEGORY_COLORS[spot.category] || '#0D9488';
@@ -142,7 +142,7 @@ export default function CollectionPage() {
 
       {/* Rewards */}
       {tab === 'rewards' && (
-        <div className="px-4 pt-4 space-y-3">
+        <div className="px-4 md:px-8 pt-4 space-y-3 max-w-4xl mx-auto">
           {rewards.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground text-sm">報酬はまだありません</div>
           ) : (

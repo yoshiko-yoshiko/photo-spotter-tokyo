@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   return (
     <div className="app-container min-h-[100dvh] flex items-center justify-center px-4" style={{ background: 'linear-gradient(to bottom, hsl(174, 40%, 96%), hsl(0, 0%, 100%))' }}>
-      <div className="w-full max-w-sm text-center">
+      <div className="w-full max-w-sm md:max-w-md mx-auto text-center">
         <div className="flex flex-col items-center mb-8">
           <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
             <Camera className="w-10 h-10 text-primary" />

@@ -39,7 +39,7 @@ export default function OnboardingPage() {
   const Icon = current.icon;
 
   return (
-    <div className="app-container min-h-[100dvh] flex flex-col bg-background">
+    <div className="app-container min-h-[100dvh] flex flex-col bg-background md:max-w-lg md:mx-auto">
       <div className="flex justify-end p-4">
         <button onClick={finish} className="text-muted-foreground text-sm">
           スキップ

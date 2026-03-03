@@ -250,7 +250,7 @@ export default function CameraPage() {
           </div>
 
           {/* Upload button */}
-          <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-[358px] md:mx-auto">
+          <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-2xl md:mx-auto">
             <button
               onClick={handleUpload}
               disabled={!selectedSpotId || !file}

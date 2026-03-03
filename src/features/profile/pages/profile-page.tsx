@@ -82,9 +82,9 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="bg-surface min-h-full pb-24">
+    <div className="bg-surface min-h-full pb-24 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="bg-card px-4 pt-8 pb-6 text-center relative">
+      <div className="bg-card px-4 md:px-8 pt-8 pb-6 text-center relative">
         {isAuthenticated && (
           <div className="absolute top-4 right-4">
             <NotificationBell />
@@ -164,7 +164,7 @@ export default function ProfilePage() {
       {allRewards && allRewards.length > 0 && (
         <div className="mx-4 mt-4">
           <h3 className="text-base font-bold text-foreground mb-3">🏆 獲得バッジ</h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
             {allRewards.map(reward => {
               const isUnlocked = unlockedRewardIds.has(reward.id);
               return (

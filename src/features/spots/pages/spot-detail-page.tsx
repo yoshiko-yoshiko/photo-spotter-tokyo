@@ -67,10 +67,10 @@ export default function SpotDetailPage() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-background pb-24">
+    <div className="min-h-[100dvh] bg-background pb-24 md:max-w-3xl md:mx-auto">
       {/* Hero */}
       <div className="relative">
-        <div className="w-full aspect-[4/3] bg-muted overflow-hidden">
+        <div className="w-full aspect-[4/3] md:aspect-[16/9] bg-muted overflow-hidden">
           {!heroImgError && spot.image_url ? (
             <img src={spot.image_url} alt={spot.name} className="w-full h-full object-cover"
               onError={() => setHeroImgError(true)} />
@@ -146,7 +146,7 @@ export default function SpotDetailPage() {
       </div>
 
       {/* CTA */}
-      <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-[358px] md:mx-auto space-y-2">
+      <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-3xl md:mx-auto space-y-2">
         {isVisited ? (
           <>
             <div className="flex items-center justify-center gap-2 text-sm text-stamp-gold font-bold bg-stamp-gold/10 border border-stamp-gold/20 rounded-full px-4 py-2">
