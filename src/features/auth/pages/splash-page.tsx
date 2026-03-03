@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 export default function SplashPage() {
   const [fadeOut, setFadeOut] = useState(false);

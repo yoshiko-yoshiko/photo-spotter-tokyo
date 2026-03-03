@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
 import { CATEGORY_COLORS } from '@/features/map/lib/map-utils';
 import { Camera, Gift, Lock, Check, Trophy, Ticket } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables } from '@/lib/supabase/types';
 
 export default function CollectionPage() {
   const navigate = useNavigate();

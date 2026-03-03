@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Camera, Grid3X3, User } from 'lucide-react';
 import { useState } from 'react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 
 const tabs = [

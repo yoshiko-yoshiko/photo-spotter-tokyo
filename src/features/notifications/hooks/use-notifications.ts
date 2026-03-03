@@ -1,20 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
-
-export interface Notification {
-  id: string;
-  user_id: string;
-  type: string;
-  title: string;
-  body: string | null;
-  photo_id: string | null;
-  actor_id: string | null;
-  is_read: boolean;
-  created_at: string;
-  spot_id: string | null;
-}
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
+import type { Notification } from '@/features/notifications/types';
 
 export function useNotifications() {
   const { user } = useAuth();
@@ -56,9 +44,9 @@ export function useNotifications() {
         .order('created_at', { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data || []).map((n: any) => ({
+      return (data || []).map((n) => ({
         ...n,
-        spot_id: n.photos?.spot_id ?? null,
+        spot_id: (n.photos as { spot_id: string | null } | null)?.spot_id ?? null,
       })) as Notification[];
     },
     enabled: !!user,

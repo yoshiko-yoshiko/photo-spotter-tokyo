@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRewardUnlock } from '@/features/rewards/hooks/use-reward-unlock';
 import { toast } from 'sonner';
@@ -79,7 +79,7 @@ export function usePhotoUpload() {
       checkNewRewards(prevRewardIds);
 
       toast.success('写真を投稿しました！スタンプを獲得 🎉');
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Upload error:', err);
       const msg = 'アップロードに失敗しました';
       setError(msg);

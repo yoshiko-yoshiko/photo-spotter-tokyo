@@ -1,12 +1,8 @@
 import { useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { toast } from 'sonner';
-
-interface AuthPromptModalProps {
-  open: boolean;
-  onClose: () => void;
-}
+import type { AuthPromptModalProps } from '@/features/auth/types';
 
 export function AuthPromptModal({ open, onClose }: AuthPromptModalProps) {
   const { linkGoogle, signInWithGoogle, isGuest } = useAuth();

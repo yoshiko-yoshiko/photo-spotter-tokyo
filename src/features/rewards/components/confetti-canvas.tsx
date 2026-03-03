@@ -1,22 +1,5 @@
 import { useEffect, useRef } from 'react';
-
-interface ConfettiCanvasProps {
-  active: boolean;
-  duration?: number;
-}
-
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  w: number;
-  h: number;
-  color: string;
-  rotation: number;
-  rotationSpeed: number;
-  opacity: number;
-}
+import type { ConfettiCanvasProps, Particle } from '@/features/rewards/types';
 
 const COLORS = [
   '#FFD700', '#FF6B35', '#0D9488', '#EC4899', '#8B5CF6',

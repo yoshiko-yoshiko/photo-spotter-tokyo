@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
 
 export function useRewards() {
   return useQuery({

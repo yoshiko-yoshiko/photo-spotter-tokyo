@@ -1,15 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, ImagePlus, X, MapPin, Upload, Loader2 } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useSpots } from '@/features/spots/hooks/use-spots';
 import { usePhotoUpload } from '@/features/camera/hooks/use-photo-upload';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
 import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
 import { toast } from 'sonner';
-
-type Step = 'select-photo' | 'select-spot' | 'uploading' | 'done';
+import type { Step } from '@/features/camera/types';
 
 const MAX_IMAGE_SIZE_MB = 10;
 const MAX_IMAGE_SIZE_BYTES = MAX_IMAGE_SIZE_MB * 1024 * 1024;
@@ -182,7 +181,7 @@ export default function CameraPage() {
               const input = document.createElement('input');
               input.type = 'file';
               input.accept = 'image/*';
-              input.onchange = (e) => handleFileSelect(e as any);
+              input.onchange = (e) => handleFileSelect(e as unknown as React.ChangeEvent<HTMLInputElement>);
               input.click();
             }}
             className="mt-4 flex items-center gap-2 text-primary text-sm"

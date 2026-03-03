@@ -1,10 +1,7 @@
 import { useSpotPhotos } from '@/features/photos/hooks/use-photos';
 import { PhotoCard } from '@/features/photos/components/photo-card';
 import { Camera } from 'lucide-react';
-
-interface PhotoGalleryProps {
-  spotId: string;
-}
+import type { PhotoGalleryProps } from '@/features/photos/types';
 
 export function PhotoGallery({ spotId }: PhotoGalleryProps) {
   const { data: photos = [], isLoading } = useSpotPhotos(spotId);

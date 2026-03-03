@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
+import type { ToggleLikeParams, ReportPhotoParams } from '@/features/photos/types';
 
 export function useSpotPhotos(spotId: string | undefined) {
   const { user } = useAuth();
@@ -61,7 +62,7 @@ export function useToggleLike() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ photoId, isLiked }: { photoId: string; isLiked: boolean }) => {
+    mutationFn: async ({ photoId, isLiked }: ToggleLikeParams) => {
       if (!user) throw new Error('Not authenticated');
 
       if (isLiked) {
@@ -85,12 +86,7 @@ export function useToggleLike() {
 
 export function useReportPhoto() {
   return useMutation({
-    mutationFn: async ({ photoId, reporterId, reason, detail }: {
-      photoId: string;
-      reporterId: string;
-      reason: string;
-      detail?: string;
-    }) => {
+    mutationFn: async ({ photoId, reporterId, reason, detail }: ReportPhotoParams) => {
       const { error } = await supabase
         .from('photo_reports')
         .insert({

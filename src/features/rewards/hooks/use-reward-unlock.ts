@@ -1,15 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
-
-interface NewReward {
-  id: string;
-  name: string;
-  type: string;
-  badge_image_url: string | null;
-  description: string | null;
-}
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
+import type { NewReward } from '@/features/rewards/types';
 
 /**
  * After a stamp is created, check if new rewards were unlocked.

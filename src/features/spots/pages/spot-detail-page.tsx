@@ -3,7 +3,7 @@ import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2 
 import { PhotoGallery } from '@/features/photos/components/photo-gallery';
 import { useSpot } from '@/features/spots/hooks/use-spots';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useCheckin } from '@/features/spots/hooks/use-checkin';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';

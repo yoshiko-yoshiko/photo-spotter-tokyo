@@ -1,26 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, LogOut, Info, Edit2, Camera, MapPin, Award, Flame } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase/client';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { Tables } from '@/integrations/supabase/types';
+import type { Tables } from '@/lib/supabase/types';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
-
-interface ProfileStats {
-  stampCount: number;
-  photoCount: number;
-  spotCount: number;
-  rewardCount: number;
-}
+import type { ProfileStats, UserProfile } from '../types';
 
 export default function ProfilePage() {
   const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{ nickname: string; avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats>({ stampCount: 0, photoCount: 0, spotCount: 0, rewardCount: 0 });
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');

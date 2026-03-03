@@ -11,7 +11,7 @@ import CameraPage from "@/features/camera/pages/camera-page";
 import CollectionPage from "@/features/rewards/pages/collection-page";
 import ProfilePage from "@/features/profile/pages/profile-page";
 import SpotDetailPage from "@/features/spots/pages/spot-detail-page";
-import NotFound from "@/pages/NotFound";
+import NotFound from "@/features/app/pages/not-found";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 
 const queryClient = new QueryClient({

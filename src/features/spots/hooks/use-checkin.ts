@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { supabase } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRewardUnlock } from '@/features/rewards/hooks/use-reward-unlock';
 import { useDebugGps } from '@/features/debug/hooks/use-debug-gps';
@@ -68,12 +68,13 @@ export function useCheckin() {
         queryClient.invalidateQueries({ queryKey: ['stamps'] });
         checkNewRewards(prevRewardIds);
       }
-    } catch (err: any) {
-      if (err?.code === 1) {
+    } catch (err: unknown) {
+      const geoErr = err as GeolocationPositionError | undefined;
+      if (geoErr?.code === 1) {
         const msg = '位置情報の許可が必要です。設定から有効にしてください。';
         setError(msg);
         toast.error(msg);
-      } else if (err?.code === 2 || err?.code === 3) {
+      } else if (geoErr?.code === 2 || geoErr?.code === 3) {
         const msg = '位置情報を取得できませんでした。再度お試しください。';
         setError(msg);
         toast.error(msg);

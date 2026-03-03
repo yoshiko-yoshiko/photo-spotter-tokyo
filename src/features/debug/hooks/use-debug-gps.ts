@@ -1,9 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-
-interface DebugPosition {
-  latitude: number;
-  longitude: number;
-}
+import type { DebugPosition } from '@/features/debug/types';
 
 const DEBUG_STORAGE_KEY = 'debug_gps_position';
 

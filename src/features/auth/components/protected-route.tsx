@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
-
-interface ProtectedRouteProps {
-  children: React.ReactNode;
-}
+import type { ProtectedRouteProps } from '@/features/auth/types';
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { loading, isGuest, user } = useAuth();

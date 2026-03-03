@@ -1,16 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Heart, MoreVertical, Flag, Ban, X, Camera } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { usePhotoLikes, useToggleLike, useReportPhoto, useBlockUser } from '@/features/photos/hooks/use-photos';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { toast } from 'sonner';
-import { Tables } from '@/integrations/supabase/types';
-
-type Photo = Tables<'photos'>;
-
-interface PhotoCardProps {
-  photo: Photo;
-}
+import type { PhotoCardProps } from '@/features/photos/types';
 
 const REPORT_REASONS = [
   '不適切なコンテンツ',

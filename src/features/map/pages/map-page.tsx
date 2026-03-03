@@ -6,11 +6,9 @@ import { useSpots } from '@/features/spots/hooks/use-spots';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { isInTokyo, TOKYO_CENTER, CATEGORY_COLORS } from '@/features/map/lib/map-utils';
 import { Search, Map, List, Navigation, Camera, Check, Loader2 } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
+import type { MapViewMode, SpotCardProps } from '@/features/map/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { env } from '@/utils/lib/env';
-
-type Spot = Tables<'spots'>;
+import { env } from '@/lib/env';
 
 function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -27,7 +25,7 @@ export default function MapPage() {
   const { data: stamps = [] } = useUserStamps();
   const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
 
-  const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [viewMode, setViewMode] = useState<MapViewMode>('map');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('全て');
   const [selectedArea, setSelectedArea] = useState<string>('全エリア');
@@ -303,7 +301,7 @@ export default function MapPage() {
   );
 }
 
-function SpotCard({ spot, isVisited, onClick }: { spot: Spot; isVisited: boolean; onClick: () => void }) {
+function SpotCard({ spot, isVisited, onClick }: SpotCardProps) {
   const color = CATEGORY_COLORS[spot.category] || '#0D9488';
   const [imgError, setImgError] = useState(false);
   return (

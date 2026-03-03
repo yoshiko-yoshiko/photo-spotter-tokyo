@@ -1,15 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Trophy, Gift, Lock, Ticket } from 'lucide-react';
-import type { Tables } from '@/integrations/supabase/types';
-
-interface RewardDetailModalProps {
-  open: boolean;
-  onClose: () => void;
-  reward: Tables<'rewards'> | null;
-  isUnlocked: boolean;
-  stampCount: number;
-  usedAt?: string | null;
-}
+import type { RewardDetailModalProps } from '@/features/rewards/types';
 
 export function RewardDetailModal({ open, onClose, reward, isUnlocked, stampCount, usedAt }: RewardDetailModalProps) {
   if (!reward) return null;

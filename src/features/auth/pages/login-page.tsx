@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Camera } from 'lucide-react';
-import { useAuth } from '@/utils/hooks/use-auth';
+import { useAuth } from '@/lib/hooks/use-auth';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 

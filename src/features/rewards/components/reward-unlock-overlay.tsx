@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Trophy, Ticket, X } from 'lucide-react';
-
-interface RewardUnlockOverlayProps {
-  rewards: Array<{
-    id: string;
-    name: string;
-    type: string;
-    badge_image_url: string | null;
-    description: string | null;
-  }>;
-  open: boolean;
-  onClose: () => void;
-}
+import type { RewardUnlockOverlayProps } from '@/features/rewards/types';
 
 export function RewardUnlockOverlay({ rewards, open, onClose }: RewardUnlockOverlayProps) {
   const [visible, setVisible] = useState(false);
