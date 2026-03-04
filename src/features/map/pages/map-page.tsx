@@ -6,6 +6,7 @@ import { useSpotIdMap, useSpotIdSync } from '@/features/spots/hooks/use-spot-id-
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { CATEGORY_COLORS, escapeHtml, createMarkerElement } from '@/features/map/lib/map-utils';
 import { useMapInit } from '@/features/map/hooks/use-map-init';
+import { useSpotFilter } from '@/features/map/hooks/use-spot-filter';
 import { SpotCard } from '@/features/map/components/spot-card';
 import { Search, Map, List, Navigation, Loader2, X } from 'lucide-react';
 import type { MapViewMode } from '@/features/map/types';
@@ -42,13 +43,7 @@ export default function MapPage() {
   const onBanner = useCallback((msg: string) => setInfoBanner(msg), []);
   const { mapContainer, mapRef, markersRef, handleLocate } = useMapInit({ viewMode, spots, onBanner });
 
-  const filteredSpots = spots.filter(spot => {
-    const q = searchQuery.toLowerCase();
-    const matchSearch = !searchQuery || spot.name.toLowerCase().includes(q) || (spot.area || '').toLowerCase().includes(q) || (spot.description || '').toLowerCase().includes(q) || (spot.photo_tip || '').toLowerCase().includes(q);
-    const matchCategory = selectedCategory === '全て' || spot.category === selectedCategory;
-    const matchArea = selectedArea === '全エリア' || spot.area === selectedArea;
-    return matchSearch && matchCategory && matchArea;
-  });
+  const filteredSpots = useSpotFilter({ spots, searchQuery, selectedCategory, selectedArea });
 
   // Update markers when spots/filters change
   useEffect(() => {
