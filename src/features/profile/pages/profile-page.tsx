@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame } from 'lucide-react';
+import { LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame, Moon, Sun } from 'lucide-react';
 import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useTheme } from '@/lib/hooks/use-theme';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { supabase } from '@/lib/supabase/client';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
@@ -15,6 +16,7 @@ import { LIMITS } from '@/lib/constants';
 
 export default function ProfilePage() {
   const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats>({ stampCount: 0, photoCount: 0, spotCount: 0, rewardCount: 0 });
@@ -103,8 +105,8 @@ export default function ProfilePage() {
             <NotificationBell />
           </div>
         )}
-        <div className="mx-auto border-4 border-primary/20 rounded-full">
-          <AvatarImage src={avatarUrl} fallback={displayName} className="w-24 h-24" iconSize="w-10 h-10" />
+        <div className="w-[104px] h-[104px] mx-auto rounded-full border-4 border-primary/20 overflow-hidden">
+          <AvatarImage src={avatarUrl} fallback={displayName} className="w-full h-full" iconSize="w-10 h-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground mt-3 overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] mx-auto">
           {displayName}
@@ -229,6 +231,10 @@ export default function ProfilePage() {
           >
             <FileText className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">自己紹介の編集</span>
+          </button>
+          <button onClick={toggleTheme} className="w-full flex items-center gap-3 p-4 text-left">
+            {theme === 'dark' ? <Sun className="w-5 h-5 text-muted-foreground" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
+            <span className="text-foreground">{theme === 'dark' ? 'ライトモード' : 'ダークモード'}</span>
           </button>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-left">
             <LogOut className="w-5 h-5 text-muted-foreground" />

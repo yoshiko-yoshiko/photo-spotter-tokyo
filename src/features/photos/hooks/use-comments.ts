@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 
-interface CommentWithUser {
+export interface CommentWithUser {
   id: string;
   photo_id: string;
   user_id: string;
@@ -31,23 +31,39 @@ export function usePhotoComments(photoId: string) {
         blockedIds = (blocks || []).map(b => b.blocked_id);
       }
 
-      const { data, error } = await supabase
+      // Stage 1: fetch comments (no JOIN — FK points to auth.users, not public.users)
+      const { data: rawComments, error } = await supabase
         .from('photo_comments')
-        .select('*, users:user_id(nickname, avatar_url)')
+        .select('*')
         .eq('photo_id', photoId)
         .is('deleted_at', null)
         .order('created_at', { ascending: true });
 
       if (error) {
-        // photo_comments table may not exist yet — return empty instead of crashing
         if (error.code === '42P01' || error.message?.includes('relation') || error.code === 'PGRST204') {
           return [];
         }
         throw error;
       }
 
-      const comments = (data || []) as unknown as CommentWithUser[];
-      return comments.filter(c => !blockedIds.includes(c.user_id));
+      if (!rawComments || rawComments.length === 0) return [];
+
+      // Filter blocked users
+      const filtered = rawComments.filter(c => !blockedIds.includes(c.user_id));
+
+      // Stage 2: fetch user info separately
+      const userIds = [...new Set(filtered.map(c => c.user_id))];
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, nickname, avatar_url')
+        .in('id', userIds);
+
+      const userMap = new Map((users || []).map(u => [u.id, u]));
+
+      return filtered.map(c => ({
+        ...c,
+        users: userMap.get(c.user_id) ?? null,
+      })) as CommentWithUser[];
     },
     enabled: !!photoId,
     retry: false,
@@ -67,6 +83,28 @@ export function useAddComment() {
         .insert({ photo_id: photoId, user_id: user.id, body });
 
       if (error) throw error;
+
+      // Notify photo owner (skip if commenting on own photo)
+      try {
+        const { data: photo } = await supabase
+          .from('photos').select('user_id').eq('id', photoId).single();
+        if (photo && photo.user_id !== user.id) {
+          const { data: commenter } = await supabase
+            .from('users').select('nickname').eq('id', user.id).single();
+          const nickname = commenter?.nickname || 'ユーザー';
+          const preview = body.length > 30 ? body.slice(0, 30) + '...' : body;
+          await supabase.from('notifications').insert({
+            user_id: photo.user_id,
+            actor_id: user.id,
+            photo_id: photoId,
+            type: 'comment',
+            title: `${nickname}さんがコメントしました`,
+            body: preview,
+          });
+        }
+      } catch {
+        // Notification failure should not block comment submission
+      }
     },
     onSuccess: (_, { photoId }) => {
       queryClient.invalidateQueries({ queryKey: ['photo-comments', photoId] });

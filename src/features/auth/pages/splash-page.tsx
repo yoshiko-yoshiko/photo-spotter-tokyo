@@ -25,8 +25,7 @@ export default function SplashPage() {
 
   return (
     <div
-      className={`app-container min-h-[100dvh] flex flex-col items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
-      style={{ background: 'linear-gradient(to bottom right, hsl(174, 83%, 32%), hsl(174, 80%, 20%))' }}
+      className={`app-container min-h-[100dvh] flex flex-col items-center justify-center bg-primary transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
     >
       <Camera className="w-20 h-20 text-primary-foreground mb-4" />
       <h1 className="text-primary-foreground text-2xl font-bold">フォトスポッター東京</h1>

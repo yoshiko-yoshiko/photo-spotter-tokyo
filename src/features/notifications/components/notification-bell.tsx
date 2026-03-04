@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, Heart, X, Info, Star, Gift, CheckCheck, ChevronDown } from 'lucide-react';
+import { Bell, Heart, X, Info, Star, Gift, CheckCheck, ChevronDown, MessageCircle } from 'lucide-react';
 import type { NotificationIconConfig } from '@/features/notifications/types';
 import { useNotifications, useUnreadCount, useMarkAsRead } from '@/features/notifications/hooks/use-notifications';
 import { formatDistanceToNow } from 'date-fns';
@@ -107,6 +107,7 @@ export function NotificationBell() {
                   {(() => {
                     const iconMap: Record<string, NotificationIconConfig> = {
                       like: { icon: Heart, bg: 'bg-destructive/10', color: 'text-destructive' },
+                      comment: { icon: MessageCircle, bg: 'bg-blue-500/10', color: 'text-blue-500' },
                       system: { icon: Info, bg: 'bg-primary/10', color: 'text-primary' },
                       reward: { icon: Gift, bg: 'bg-amber-500/10', color: 'text-amber-500' },
                       stamp: { icon: Star, bg: 'bg-emerald-500/10', color: 'text-emerald-500' },

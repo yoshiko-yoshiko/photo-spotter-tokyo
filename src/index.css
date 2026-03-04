@@ -112,3 +112,41 @@
   background: hsl(var(--muted));
   color: hsl(var(--foreground));
 }
+
+/* Dark mode overrides */
+.dark {
+  --background: 220 20% 10%;
+  --foreground: 210 40% 96%;
+  --card: 220 18% 13%;
+  --card-foreground: 210 40% 96%;
+  --popover: 220 18% 13%;
+  --popover-foreground: 210 40% 96%;
+  --primary: 174 83% 32%;
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 174 72% 40%;
+  --primary-dark: 174 80% 25%;
+  --secondary: 220 14% 20%;
+  --secondary-foreground: 210 40% 96%;
+  --muted: 220 14% 18%;
+  --muted-foreground: 215 16% 57%;
+  --accent: 25 95% 53%;
+  --accent-foreground: 0 0% 100%;
+  --accent-light: 27 97% 62%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 160 84% 39%;
+  --success-foreground: 0 0% 100%;
+  --stamp-gold: 38 92% 50%;
+  --surface: 220 18% 11%;
+  --border: 220 14% 22%;
+  --input: 220 14% 22%;
+  --ring: 174 83% 32%;
+  --sidebar-background: 220 18% 11%;
+  --sidebar-foreground: 210 40% 96%;
+  --sidebar-primary: 210 40% 96%;
+  --sidebar-primary-foreground: 220 20% 10%;
+  --sidebar-accent: 220 14% 18%;
+  --sidebar-accent-foreground: 210 40% 96%;
+  --sidebar-border: 220 14% 22%;
+  --sidebar-ring: 174 83% 32%;
+}

@@ -25,24 +25,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="app-container min-h-[100dvh] flex flex-col bg-black px-6">
+    <div className="app-container min-h-[100dvh] flex flex-col bg-background px-6">
       {/* Top spacer */}
       <div className="flex-1" />
 
       {/* Main content */}
       <div className="w-full max-w-sm mx-auto">
         {/* App name */}
-        <h1 className="text-white text-4xl font-bold">
+        <h1 className="text-foreground text-4xl font-bold">
           PhotoSpotter.
         </h1>
-        <p className="text-white/40 text-sm mt-2 mb-12">
+        <p className="text-muted-foreground text-sm mt-2 mb-12">
           東京のフォトスポットを探して、撮って、シェアしよう
         </p>
 
         {/* Google login */}
         <button
           onClick={signInWithGoogle}
-          className="w-full rounded-xl bg-white text-black py-3.5 font-medium flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
+          className="w-full rounded-xl bg-card text-foreground border border-border py-3.5 font-medium flex items-center justify-center gap-3 shadow-sm transition-all active:scale-[0.98]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -56,7 +56,7 @@ export default function LoginPage() {
         {/* Guest login */}
         <button
           onClick={handleGuest}
-          className="w-full mt-3 rounded-xl bg-white/10 text-white/70 py-3.5 font-medium transition-all active:scale-[0.98]"
+          className="w-full mt-3 rounded-xl bg-muted text-muted-foreground py-3.5 font-medium transition-all active:scale-[0.98]"
         >
           ゲストとして閲覧する
         </button>
@@ -64,7 +64,7 @@ export default function LoginPage() {
 
       {/* Bottom spacer + terms */}
       <div className="flex-1 flex flex-col justify-end pb-10">
-        <p className="text-white/20 text-[10px] text-center">
+        <p className="text-muted-foreground/50 text-[10px] text-center">
           ログインすることで利用規約に同意したものとみなします
         </p>
       </div>

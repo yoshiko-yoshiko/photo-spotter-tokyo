@@ -140,6 +140,31 @@ export function useReportPhoto() {
   });
 }
 
+export function useDeletePhoto() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (photoId: string) => {
+      if (!user) throw new Error('Not authenticated');
+
+      // Soft delete
+      const { error } = await supabase
+        .from('photos')
+        .update({ deleted_at: new Date().toISOString() })
+        .eq('id', photoId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['spot-photos'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] });
+      queryClient.invalidateQueries({ queryKey: ['user-photos'] });
+    },
+  });
+}
+
 export function useBlockUser() {
   const { user } = useAuth();
   const queryClient = useQueryClient();

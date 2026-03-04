@@ -1,15 +1,17 @@
 import { useRef, useCallback, useState } from 'react';
-import { Heart, Camera } from 'lucide-react';
+import { Heart, Camera, MessageCircle } from 'lucide-react';
 import { AvatarImage } from '@/components/ui/avatar-image';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TIMING } from '@/lib/constants';
 import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { useTimeline } from '@/features/timeline/hooks/use-timeline';
+import { PhotoDetailModal } from '@/features/photos/components/photo-detail-modal';
 import type { TimelinePost } from '@/features/timeline/types';
 
-function TimelineCard({ post }: { post: TimelinePost }) {
+function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick: () => void }) {
   const {
     localLiked,
     localCount,
@@ -18,17 +20,37 @@ function TimelineCard({ post }: { post: TimelinePost }) {
     showAuthModal,
     setShowAuthModal,
     handleLike,
-    handleDoubleTap,
   } = usePhotoLikeState({
     photoId: post.id,
     initialLikesCount: post.likes_count ?? 0,
   });
 
   const [imgError, setImgError] = useState(false);
+  const lastTapRef = useRef(0);
+  const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nickname = post.users?.nickname ?? 'ユーザー';
   const avatarUrl = post.users?.avatar_url;
   const bio = post.users?.bio;
+
+  const handleImageTap = () => {
+    const now = Date.now();
+    const timeSinceLastTap = now - lastTapRef.current;
+    lastTapRef.current = now;
+
+    if (timeSinceLastTap < TIMING.DOUBLE_TAP_DELAY) {
+      if (singleTapTimerRef.current) {
+        clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      if (!localLiked) handleLike();
+    } else {
+      singleTapTimerRef.current = setTimeout(() => {
+        singleTapTimerRef.current = null;
+        onPhotoClick();
+      }, TIMING.DOUBLE_TAP_DELAY);
+    }
+  };
 
   return (
     <>
@@ -46,7 +68,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
         </div>
 
         {/* Photo */}
-        <div className="relative aspect-[4/3] bg-muted" onClick={handleDoubleTap}>
+        <div className="relative aspect-[4/3] bg-muted" onClick={handleImageTap}>
           {!imgError ? (
             <img
               src={post.image_url}
@@ -84,6 +106,14 @@ function TimelineCard({ post }: { post: TimelinePost }) {
               <span className={localLiked ? 'text-destructive font-medium' : 'text-muted-foreground'}>
                 {localCount}
               </span>
+            </button>
+            <button
+              onClick={onPhotoClick}
+              aria-label="コメント"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground transition-all active:scale-110"
+            >
+              <MessageCircle className="w-5 h-5" />
+              <span>{post.comments_count > 0 ? post.comments_count : 'コメント'}</span>
             </button>
           </div>
 
@@ -133,6 +163,8 @@ export function TimelinePage() {
     isLoading,
     isError,
   } = useTimeline();
+
+  const [selectedPost, setSelectedPost] = useState<TimelinePost | null>(null);
 
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useCallback(
@@ -186,7 +218,11 @@ export function TimelinePage() {
       <h1 className="text-lg font-bold text-foreground mb-4">タイムライン</h1>
       <div className="space-y-4">
         {posts.map(post => (
-          <TimelineCard key={post.id} post={post} />
+          <TimelineCard
+            key={post.id}
+            post={post}
+            onPhotoClick={() => setSelectedPost(post)}
+          />
         ))}
       </div>
 
@@ -197,6 +233,16 @@ export function TimelinePage() {
         <div className="py-4">
           <TimelineSkeleton />
         </div>
+      )}
+
+      {/* Photo detail modal */}
+      {selectedPost && (
+        <PhotoDetailModal
+          photo={selectedPost}
+          user={selectedPost.users}
+          isOpen={!!selectedPost}
+          onClose={() => setSelectedPost(null)}
+        />
       )}
     </div>
   );

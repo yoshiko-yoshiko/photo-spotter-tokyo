@@ -27,7 +27,7 @@ export function useTimeline() {
 
       const { data, error } = await supabase
         .from('photos')
-        .select('*, users:user_id(nickname, avatar_url)')
+        .select('*, users:user_id(nickname, avatar_url, bio)')
         .eq('is_public', true)
         .is('deleted_at', null)
         .order('created_at', { ascending: false })
@@ -35,15 +35,8 @@ export function useTimeline() {
 
       if (error) throw error;
 
-      // Filter out blocked users and normalize bio field
       const posts = ((data || []) as unknown as TimelinePost[])
-        .filter(p => !blockedIds.includes(p.user_id))
-        .map(p => ({
-          ...p,
-          users: p.users
-            ? { ...p.users, bio: (p.users as Record<string, unknown>).bio as string | null ?? null }
-            : null,
-        }));
+        .filter(p => !blockedIds.includes(p.user_id));
 
       return {
         posts,
