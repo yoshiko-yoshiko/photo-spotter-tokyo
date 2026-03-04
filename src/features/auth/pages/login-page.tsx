@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router-dom';
-import { Camera } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
@@ -26,19 +25,24 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="app-container min-h-[100dvh] flex items-center justify-center px-4" style={{ background: 'linear-gradient(to bottom, hsl(174, 40%, 96%), hsl(0, 0%, 100%))' }}>
-      <div className="w-full max-w-sm md:max-w-md mx-auto text-center">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-            <Camera className="w-10 h-10 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-primary-dark">フォトスポッター東京</h1>
-          <p className="text-muted-foreground text-sm mt-2">撮って、集めて、シェアしよう</p>
-        </div>
+    <div className="app-container min-h-[100dvh] flex flex-col bg-black px-6">
+      {/* Top spacer */}
+      <div className="flex-1" />
 
+      {/* Main content */}
+      <div className="w-full max-w-sm mx-auto">
+        {/* App name */}
+        <h1 className="text-white text-4xl font-bold">
+          PhotoSpotter.
+        </h1>
+        <p className="text-white/40 text-sm mt-2 mb-12">
+          東京のフォトスポットを探して、撮って、シェアしよう
+        </p>
+
+        {/* Google login */}
         <button
           onClick={signInWithGoogle}
-          className="w-full rounded-full bg-card border-2 border-border hover:bg-surface text-foreground py-3 shadow-sm font-medium flex items-center justify-center gap-3 transition-colors"
+          className="w-full rounded-xl bg-white text-black py-3.5 font-medium flex items-center justify-center gap-3 transition-all active:scale-[0.98]"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -49,12 +53,20 @@ export default function LoginPage() {
           Googleでログイン
         </button>
 
+        {/* Guest login */}
         <button
           onClick={handleGuest}
-          className="mt-4 text-primary underline text-sm"
+          className="w-full mt-3 rounded-xl bg-white/10 text-white/70 py-3.5 font-medium transition-all active:scale-[0.98]"
         >
           ゲストとして閲覧する
         </button>
+      </div>
+
+      {/* Bottom spacer + terms */}
+      <div className="flex-1 flex flex-col justify-end pb-10">
+        <p className="text-white/20 text-[10px] text-center">
+          ログインすることで利用規約に同意したものとみなします
+        </p>
       </div>
     </div>
   );
