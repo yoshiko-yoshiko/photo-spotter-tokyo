@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import { useSpots } from '@/features/spots/hooks/use-spots';
-import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
+import { useSpotIdMap, useSpotIdSync } from '@/features/spots/hooks/use-spot-id-map';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { CATEGORY_COLORS, escapeHtml, createMarkerElement } from '@/features/map/lib/map-utils';
 import { useMapInit } from '@/features/map/hooks/use-map-init';
@@ -21,6 +21,7 @@ export default function MapPage() {
   const navigate = useNavigate();
   const { data: spots = [], isLoading } = useSpots();
   const { data: idMap } = useSpotIdMap();
+  useSpotIdSync(spots);
   const { data: stamps = [] } = useUserStamps();
   const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
 

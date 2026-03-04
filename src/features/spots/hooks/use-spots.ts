@@ -13,7 +13,7 @@ export function useSpots() {
       });
       return res.contents.map(cmsSpotToSpot);
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 1, // 1分キャッシュ
   });
 }
 
