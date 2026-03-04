@@ -15,7 +15,7 @@ export function cmsSpotToSpot(cms: CMSSpot): Spot {
     photo_tip: cms.photoTip || null,
     best_time: cms.bestTime || null,
     radius_m: cms.radiusM,
-    image_url: cms.image?.url || null,
+    image_url: cms.imageUrl || cms.image?.url || null,
     is_active: true,
   };
 }

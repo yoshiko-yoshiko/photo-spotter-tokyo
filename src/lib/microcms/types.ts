@@ -14,6 +14,7 @@ export type CMSSpot = {
   bestTime?: string;
   radiusM: number;
   image?: { url: string; width: number; height: number };
+  imageUrl?: string;
 } & MicroCMSListContent;
 
 /** フロントエンドで使う統一Spot型（snake_case、既存コードとの互換性維持） */
