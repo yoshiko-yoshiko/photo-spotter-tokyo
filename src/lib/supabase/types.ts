@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      photo_comments: {
+        Row: {
+          id: string
+          photo_id: string
+          user_id: string
+          body: string
+          created_at: string
+          deleted_at: string | null
+        }
+        Insert: {
+          id?: string
+          photo_id: string
+          user_id: string
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+        }
+        Update: {
+          id?: string
+          photo_id?: string
+          user_id?: string
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photo_comments_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           actor_id: string | null
@@ -145,6 +180,7 @@ export type Database = {
       photos: {
         Row: {
           caption: string | null
+          comments_count: number
           created_at: string
           deleted_at: string | null
           id: string
@@ -158,6 +194,7 @@ export type Database = {
         }
         Insert: {
           caption?: string | null
+          comments_count?: number
           created_at?: string
           deleted_at?: string | null
           id?: string
@@ -171,6 +208,7 @@ export type Database = {
         }
         Update: {
           caption?: string | null
+          comments_count?: number
           created_at?: string
           deleted_at?: string | null
           id?: string
