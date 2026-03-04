@@ -1,10 +1,11 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
-import { Heart, Camera, User } from 'lucide-react';
+import { useRef, useCallback, useState } from 'react';
+import { Heart, Camera } from 'lucide-react';
+import { AvatarImage } from '@/components/ui/avatar-image';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
+import { TIMING } from '@/lib/constants';
+import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { useTimeline } from '@/features/timeline/hooks/use-timeline';
 import type { TimelinePost } from '@/features/timeline/types';
@@ -35,7 +36,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
     }
     if (!localLiked) {
       setHeartBurst(true);
-      setTimeout(() => setHeartBurst(false), 600);
+      setTimeout(() => setHeartBurst(false), TIMING.LIKE_BURST_DURATION);
     }
     setLocalLiked(!localLiked);
     setLocalCount(prev => localLiked ? prev - 1 : prev + 1);
@@ -44,7 +45,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
 
   const handleDoubleTap = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < 300) {
+    if (now - lastTapRef.current < TIMING.DOUBLE_TAP_DELAY) {
       if (!localLiked) handleLike();
     }
     lastTapRef.current = now;
@@ -59,13 +60,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         {/* User info header */}
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={nickname} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-4 h-4 text-muted-foreground" />
-            )}
-          </div>
+          <AvatarImage src={avatarUrl} fallback={nickname} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{nickname}</p>
             {bio && <p className="text-xs text-muted-foreground truncate">{bio}</p>}

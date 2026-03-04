@@ -1,13 +1,15 @@
 import { useState, useRef, useCallback } from 'react';
 import { Send, Loader2, Trash2 } from 'lucide-react';
+import { AvatarImage } from '@/components/ui/avatar-image';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { LIMITS, TIMING } from '@/lib/constants';
 import { usePhotoComments, useAddComment, useDeleteComment } from '@/features/photos/hooks/use-comments';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 
-const MAX_COMMENT_LENGTH = 500;
+const MAX_COMMENT_LENGTH = LIMITS.MAX_COMMENT_LENGTH;
 
 interface PhotoCommentsProps {
   photoId: string;
@@ -68,7 +70,7 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
     (commentId: string) => {
       longPressTimerRef.current = setTimeout(() => {
         setDeleteTargetId(commentId);
-      }, 500);
+      }, TIMING.LONG_PRESS_DELAY);
     },
     [],
   );
@@ -122,19 +124,12 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
                   onTouchCancel={handleLongPressEnd}
                 >
                   {/* Avatar */}
-                  <div className="flex-shrink-0 w-7 h-7 rounded-full bg-muted overflow-hidden">
-                    {comment.users?.avatar_url ? (
-                      <img
-                        src={comment.users.avatar_url}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs font-medium text-muted-foreground">
-                        {comment.users?.nickname?.charAt(0) ?? '?'}
-                      </div>
-                    )}
-                  </div>
+                  <AvatarImage
+                    src={comment.users?.avatar_url}
+                    fallback={comment.users?.nickname ?? '?'}
+                    className="w-7 h-7"
+                    iconSize="w-3 h-3"
+                  />
 
                   {/* Body */}
                   <div className="flex-1 min-w-0">

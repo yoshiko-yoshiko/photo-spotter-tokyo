@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame } from 'lucide-react';
+import { LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame } from 'lucide-react';
+import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { supabase } from '@/lib/supabase/client';
@@ -102,12 +103,8 @@ export default function ProfilePage() {
             <NotificationBell />
           </div>
         )}
-        <div className="mx-auto w-24 h-24 rounded-full border-4 border-primary/20 bg-muted flex items-center justify-center overflow-hidden">
-          {avatarUrl ? (
-            <img src={avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-          ) : (
-            <User className="w-10 h-10 text-muted-foreground" />
-          )}
+        <div className="mx-auto border-4 border-primary/20 rounded-full">
+          <AvatarImage src={avatarUrl} fallback={displayName} className="w-24 h-24" iconSize="w-10 h-10" />
         </div>
         <h2 className="text-xl font-bold text-foreground mt-3 overflow-hidden text-ellipsis whitespace-nowrap max-w-[200px] mx-auto">
           {displayName}
