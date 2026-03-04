@@ -1,13 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame, Moon, Sun } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
 import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { useSpots } from '@/features/spots/hooks/use-spots';
-import { supabase } from '@/lib/supabase/client';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,12 +14,14 @@ import { NotificationBell } from '@/features/notifications/components/notificati
 import { LIMITS } from '@/lib/constants';
 import { useUserProfile } from '../hooks/use-user-profile';
 import { useProfileStats } from '../hooks/use-profile-stats';
+import { useUpdateNickname, useUpdateBio } from '../hooks/use-update-profile';
 
 export default function ProfilePage() {
   const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
+  const updateNickname = useUpdateNickname();
+  const updateBio = useUpdateBio();
 
   const { data: profile } = useUserProfile(user?.id);
   const { data: stats, isLoading: loading } = useProfileStats(user?.id);
@@ -52,18 +52,14 @@ export default function ProfilePage() {
     navigate('/login', { replace: true });
   };
 
-  const handleSaveName = async () => {
-    if (!user || !newName.trim()) return;
-    await supabase.from('users').update({ nickname: newName.trim() }).eq('id', user.id);
-    queryClient.invalidateQueries({ queryKey: ['user-profile', user.id] });
+  const handleSaveName = () => {
+    if (!newName.trim()) return;
+    updateNickname.mutate(newName.trim());
     setEditingName(false);
   };
 
-  const handleSaveBio = async () => {
-    if (!user) return;
-    const bio = newBio.trim() || null;
-    await supabase.from('users').update({ bio }).eq('id', user.id);
-    queryClient.invalidateQueries({ queryKey: ['user-profile', user.id] });
+  const handleSaveBio = () => {
+    updateBio.mutate(newBio);
     setEditingBio(false);
   };
 
