@@ -1,26 +1,19 @@
 import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useBlockedUsers } from '@/lib/hooks/use-blocked-users';
 import type { ToggleLikeParams, ReportPhotoParams } from '@/features/photos/types';
 import { PAGINATION } from '@/lib/constants';
 
 const PAGE_SIZE = PAGINATION.PAGE_SIZE;
 
 export function useSpotPhotos(spotId: string | undefined) {
-  const { user } = useAuth();
+  const { data: blockedIds = [] } = useBlockedUsers();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['spot-photos', spotId],
     queryFn: async () => {
       if (!spotId) return [];
-      let blockedIds: string[] = [];
-      if (user) {
-        const { data: blocks } = await supabase
-          .from('user_blocks')
-          .select('blocked_id')
-          .eq('blocker_id', user.id);
-        blockedIds = (blocks || []).map(b => b.blocked_id);
-      }
 
       const { data, error } = await supabase
         .from('photos')
@@ -31,28 +24,22 @@ export function useSpotPhotos(spotId: string | undefined) {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).filter(p => !blockedIds.includes(p.user_id));
+      return data || [];
     },
     enabled: !!spotId,
   });
+
+  const filtered = query.data?.filter(p => !blockedIds.includes(p.user_id));
+  return { ...query, data: filtered };
 }
 
 export function useInfiniteSpotPhotos(spotId: string | undefined) {
-  const { user } = useAuth();
+  const { data: blockedIds = [] } = useBlockedUsers();
 
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
     queryKey: ['spot-photos-infinite', spotId],
     queryFn: async ({ pageParam = 0 }) => {
       if (!spotId) return { photos: [], nextOffset: null };
-
-      let blockedIds: string[] = [];
-      if (user) {
-        const { data: blocks } = await supabase
-          .from('user_blocks')
-          .select('blocked_id')
-          .eq('blocker_id', user.id);
-        blockedIds = (blocks || []).map(b => b.blocked_id);
-      }
 
       const { data, error } = await supabase
         .from('photos')
@@ -65,15 +52,23 @@ export function useInfiniteSpotPhotos(spotId: string | undefined) {
 
       if (error) throw error;
 
-      const filtered = (data || []).filter(p => !blockedIds.includes(p.user_id));
       const nextOffset = (data || []).length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
-
-      return { photos: filtered, nextOffset };
+      return { photos: data || [], nextOffset };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     enabled: !!spotId,
   });
+
+  const filteredPages = query.data?.pages.map(page => ({
+    ...page,
+    photos: page.photos.filter(p => !blockedIds.includes(p.user_id)),
+  }));
+
+  return {
+    ...query,
+    data: query.data ? { ...query.data, pages: filteredPages! } : undefined,
+  };
 }
 
 export function usePhotoLikes(photoId: string | undefined) {
@@ -178,6 +173,7 @@ export function useBlockUser() {
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['blocked-users'] });
       queryClient.invalidateQueries({ queryKey: ['spot-photos'] });
     },
   });

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useBlockedUsers } from '@/lib/hooks/use-blocked-users';
 
 export interface CommentWithUser {
   id: string;
@@ -16,21 +17,11 @@ export interface CommentWithUser {
 }
 
 export function usePhotoComments(photoId: string) {
-  const { user } = useAuth();
+  const { data: blockedIds = [] } = useBlockedUsers();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['photo-comments', photoId],
     queryFn: async () => {
-      // Get blocked user ids
-      let blockedIds: string[] = [];
-      if (user) {
-        const { data: blocks } = await supabase
-          .from('user_blocks')
-          .select('blocked_id')
-          .eq('blocker_id', user.id);
-        blockedIds = (blocks || []).map(b => b.blocked_id);
-      }
-
       // Stage 1: fetch comments (no JOIN — FK points to auth.users, not public.users)
       const { data: rawComments, error } = await supabase
         .from('photo_comments')
@@ -48,11 +39,8 @@ export function usePhotoComments(photoId: string) {
 
       if (!rawComments || rawComments.length === 0) return [];
 
-      // Filter blocked users
-      const filtered = rawComments.filter(c => !blockedIds.includes(c.user_id));
-
       // Stage 2: fetch user info separately
-      const userIds = [...new Set(filtered.map(c => c.user_id))];
+      const userIds = [...new Set(rawComments.map(c => c.user_id))];
       const { data: users } = await supabase
         .from('users')
         .select('id, nickname, avatar_url')
@@ -60,7 +48,7 @@ export function usePhotoComments(photoId: string) {
 
       const userMap = new Map((users || []).map(u => [u.id, u]));
 
-      return filtered.map(c => ({
+      return rawComments.map(c => ({
         ...c,
         users: userMap.get(c.user_id) ?? null,
       })) as CommentWithUser[];
@@ -68,6 +56,9 @@ export function usePhotoComments(photoId: string) {
     enabled: !!photoId,
     retry: false,
   });
+
+  const filtered = query.data?.filter(c => !blockedIds.includes(c.user_id));
+  return { ...query, data: filtered };
 }
 
 export function useAddComment() {

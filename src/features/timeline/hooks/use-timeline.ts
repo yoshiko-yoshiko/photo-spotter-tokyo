@@ -1,27 +1,17 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
-import { useAuth } from '@/lib/hooks/use-auth';
+import { useBlockedUsers } from '@/lib/hooks/use-blocked-users';
 import type { TimelinePost } from '@/features/timeline/types';
 import { PAGINATION } from '@/lib/constants';
 
 const PAGE_SIZE = PAGINATION.PAGE_SIZE;
 
 export function useTimeline() {
-  const { user } = useAuth();
+  const { data: blockedIds = [] } = useBlockedUsers();
 
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
     queryKey: ['timeline'],
     queryFn: async ({ pageParam = 0 }) => {
-      // Get blocked user ids
-      let blockedIds: string[] = [];
-      if (user) {
-        const { data: blocks } = await supabase
-          .from('user_blocks')
-          .select('blocked_id')
-          .eq('blocker_id', user.id);
-        blockedIds = (blocks || []).map(b => b.blocked_id);
-      }
-
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
@@ -35,15 +25,22 @@ export function useTimeline() {
 
       if (error) throw error;
 
-      const posts = ((data || []) as unknown as TimelinePost[])
-        .filter(p => !blockedIds.includes(p.user_id));
-
       return {
-        posts,
+        posts: (data || []) as unknown as TimelinePost[],
         nextCursor: data && data.length === PAGE_SIZE ? pageParam + 1 : null,
       };
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: 0,
   });
+
+  const filteredPages = query.data?.pages.map(page => ({
+    ...page,
+    posts: page.posts.filter(p => !blockedIds.includes(p.user_id)),
+  }));
+
+  return {
+    ...query,
+    data: query.data ? { ...query.data, pages: filteredPages! } : undefined,
+  };
 }
