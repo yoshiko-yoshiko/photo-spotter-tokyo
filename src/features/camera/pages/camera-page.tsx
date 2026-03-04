@@ -27,12 +27,7 @@ export default function CameraPage() {
   const [selectedSpotId, setSelectedSpotId] = useState<string | null>(null);
   const [caption, setCaption] = useState('');
   const [spotSearch, setSpotSearch] = useState('');
-  const [showAuthModal, setShowAuthModal] = useState(false);
-
-  // If guest, show auth modal
-  useEffect(() => {
-    if (isGuest) setShowAuthModal(true);
-  }, [isGuest]);
+  const showAuthModal = isGuest;
 
   // Revoke objectURL when preview changes or component unmounts
   useEffect(() => {
@@ -99,7 +94,7 @@ export default function CameraPage() {
         <Camera className="w-12 h-12 text-muted-foreground mb-4" />
         <h2 className="text-lg font-bold text-foreground">ログインが必要です</h2>
         <p className="text-muted-foreground text-sm mt-2">写真を投稿するにはログインしてください</p>
-        <AuthPromptModal open={showAuthModal} onClose={() => { setShowAuthModal(false); navigate('/map'); }} />
+        <AuthPromptModal open={showAuthModal} onClose={() => navigate('/map')} />
       </div>
     );
   }
@@ -251,7 +246,7 @@ export default function CameraPage() {
         </div>
       )}
 
-      <AuthPromptModal open={showAuthModal} onClose={() => { setShowAuthModal(false); navigate('/map'); }} />
+      <AuthPromptModal open={showAuthModal} onClose={() => navigate('/map')} />
       <ConfettiCanvas active={showCelebration} />
       <RewardUnlockOverlay rewards={newRewards} open={showCelebration} onClose={dismissCelebration} />
     </div>
