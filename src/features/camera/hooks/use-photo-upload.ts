@@ -74,6 +74,8 @@ export function usePhotoUpload() {
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey: ['stamps'] });
       queryClient.invalidateQueries({ queryKey: ['photos'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] });
+      queryClient.invalidateQueries({ queryKey: ['spot-photos'] });
 
       // Check for newly unlocked rewards
       checkNewRewards(prevRewardIds);

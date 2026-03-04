@@ -5,9 +5,25 @@ import { useNotifications, useUnreadCount, useMarkAsRead } from '@/features/noti
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase/client';
+import { PhotoDetailModal } from '@/features/photos/components/photo-detail-modal';
 
 const PAGE_SIZE = 10;
+
+interface ModalPhoto {
+  id: string;
+  image_url: string;
+  caption: string | null;
+  likes_count: number;
+  created_at: string;
+  user_id: string;
+}
+
+interface ModalUser {
+  nickname: string;
+  avatar_url: string | null;
+  bio: string | null;
+}
 
 export function NotificationBell() {
   const { data: notifications = [] } = useNotifications();
@@ -18,15 +34,45 @@ export function NotificationBell() {
   const panelRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // Direct photo modal state (for like/comment notifications)
+  const [modalPhoto, setModalPhoto] = useState<ModalPhoto | null>(null);
+  const [modalUser, setModalUser] = useState<ModalUser | null>(null);
+
   const visibleNotifications = notifications.slice(0, visibleCount);
   const hasMore = visibleCount < notifications.length;
 
-  const handleNotificationClick = (n: (typeof notifications)[number]) => {
+  const handleNotificationClick = async (n: (typeof notifications)[number]) => {
+    if (!n.is_read) {
+      markAsRead.mutate([n.id]);
+    }
+    setOpen(false);
+
+    // For like/comment: open photo modal directly (no page navigation)
+    if (n.photo_id && (n.type === 'like' || n.type === 'comment')) {
+      const { data: photo } = await supabase
+        .from('photos')
+        .select('id, image_url, caption, likes_count, created_at, user_id')
+        .eq('id', n.photo_id)
+        .maybeSingle();
+
+      if (photo) {
+        const { data: user } = await supabase
+          .from('users')
+          .select('nickname, avatar_url, bio')
+          .eq('id', photo.user_id)
+          .maybeSingle();
+
+        setModalPhoto(photo);
+        setModalUser(user);
+        return;
+      }
+    }
+
+    // Fallback: navigate to spot or map
     if (n.spot_slug) {
-      setOpen(false);
       navigate(`/spots/${n.spot_slug}`);
     } else {
-      toast.info('該当のスポットが見つかりませんでした');
+      navigate('/map');
     }
   };
 
@@ -153,6 +199,15 @@ export function NotificationBell() {
             </div>
           )}
         </div>
+      )}
+      {/* Photo detail modal opened from notification */}
+      {modalPhoto && (
+        <PhotoDetailModal
+          photo={modalPhoto}
+          user={modalUser}
+          isOpen
+          onClose={() => { setModalPhoto(null); setModalUser(null); }}
+        />
       )}
     </div>
   );

@@ -16,6 +16,7 @@ import NotFound from "@/features/app/pages/not-found";
 import DebugPage from "@/features/debug/pages/debug-page";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
+import "@/lib/hooks/use-theme"; // Apply saved theme immediately on app load
 
 const TimelinePage = lazy(() => import('@/features/timeline/pages/timeline-page').then(m => ({ default: m.TimelinePage })));
 const SpotPhotosPage = lazy(() => import('@/features/photos/pages/spot-photos-page'));

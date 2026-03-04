@@ -1,14 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSpotPhotos } from '@/features/photos/hooks/use-photos';
 import { PhotoCard } from '@/features/photos/components/photo-card';
 import { PhotoDetailModal } from '@/features/photos/components/photo-detail-modal';
 import { Camera } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import type { PhotoGalleryProps, PhotoWithUser } from '@/features/photos/types';
 
 export function PhotoGallery({ spotId, slug }: PhotoGalleryProps) {
   const { data: photos = [], isLoading } = useSpotPhotos(spotId);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoWithUser | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Auto-open photo modal from URL query param (e.g. ?photo=xxx from notifications)
+  useEffect(() => {
+    const photoId = searchParams.get('photo');
+    if (photoId && photos.length > 0 && !selectedPhoto) {
+      const target = photos.find(p => p.id === photoId) as PhotoWithUser | undefined;
+      if (target) {
+        setSelectedPhoto(target);
+        searchParams.delete('photo');
+        setSearchParams(searchParams, { replace: true });
+      }
+    }
+  }, [photos, searchParams, selectedPhoto, setSearchParams]);
 
   if (isLoading) {
     return (

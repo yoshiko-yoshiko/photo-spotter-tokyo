@@ -37,19 +37,50 @@ export function useNotifications() {
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase
+
+      // Stage 1: fetch notifications
+      const { data: raw, error } = await supabase
         .from('notifications')
-        .select('*, photos:photo_id(spot_id, spots:spot_id(slug))')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(30);
       if (error) throw error;
-      return (data || []).map((n) => {
-        const photos = n.photos as { spot_id: string | null; spots: { slug: string } | null } | null;
+      if (!raw || raw.length === 0) return [];
+
+      // Stage 2: resolve photo → spot → slug
+      const photoIds = [...new Set(raw.filter(n => n.photo_id).map(n => n.photo_id as string))];
+      let photoSpotMap = new Map<string, { spot_id: string; slug: string }>();
+
+      if (photoIds.length > 0) {
+        const { data: photos } = await supabase
+          .from('photos')
+          .select('id, spot_id')
+          .in('id', photoIds);
+
+        if (photos && photos.length > 0) {
+          const spotIds = [...new Set(photos.filter(p => p.spot_id).map(p => p.spot_id))];
+          const { data: spots } = await supabase
+            .from('spots')
+            .select('id, slug')
+            .in('id', spotIds);
+
+          const spotMap = new Map((spots || []).map(s => [s.id, s.slug]));
+
+          for (const p of photos) {
+            if (p.spot_id && spotMap.has(p.spot_id)) {
+              photoSpotMap.set(p.id, { spot_id: p.spot_id, slug: spotMap.get(p.spot_id)! });
+            }
+          }
+        }
+      }
+
+      return raw.map(n => {
+        const resolved = n.photo_id ? photoSpotMap.get(n.photo_id) : null;
         return {
           ...n,
-          spot_id: photos?.spot_id ?? null,
-          spot_slug: photos?.spots?.slug ?? null,
+          spot_id: resolved?.spot_id ?? null,
+          spot_slug: resolved?.slug ?? null,
         };
       }) as Notification[];
     },

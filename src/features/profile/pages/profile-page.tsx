@@ -5,6 +5,7 @@ import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useTheme } from '@/lib/hooks/use-theme';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
+import { useSpots } from '@/features/spots/hooks/use-spots';
 import { supabase } from '@/lib/supabase/client';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { RewardDetailModal } from '@/features/rewards/components/reward-detail-modal';
@@ -31,6 +32,7 @@ export default function ProfilePage() {
 
   const { data: allRewards } = useRewards();
   const { data: userRewards } = useUserRewards();
+  const { data: allSpots } = useSpots();
 
   useEffect(() => {
     if (!user) return;
@@ -49,8 +51,7 @@ export default function ProfilePage() {
       supabase.from('stamps').select('id, spot_id').eq('user_id', user.id),
       supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null),
       supabase.from('user_rewards').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      supabase.from('spots').select('id', { count: 'exact', head: true }),
-    ]).then(([stampsRes, photosRes, rewardsRes, spotsRes]) => {
+    ]).then(([stampsRes, photosRes, rewardsRes]) => {
       const stamps = stampsRes.data || [];
       const uniqueSpots = new Set(stamps.map(s => s.spot_id));
       setStats({
@@ -59,10 +60,16 @@ export default function ProfilePage() {
         spotCount: uniqueSpots.size,
         rewardCount: rewardsRes.count || 0,
       });
-      if (spotsRes.count != null) setTotalSpots(spotsRes.count);
       setLoading(false);
     });
   }, [user]);
+
+  // Use microCMS spot count as the source of truth
+  useEffect(() => {
+    if (allSpots && allSpots.length > 0) {
+      setTotalSpots(allSpots.length);
+    }
+  }, [allSpots]);
 
   const handleLogout = async () => {
     await signOut();

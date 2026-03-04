@@ -14,6 +14,10 @@ function applyTheme(theme: Theme) {
   document.documentElement.classList.toggle('dark', theme === 'dark');
 }
 
+// Apply theme immediately on module load (before any React render)
+// This prevents flash of wrong theme on page navigation
+applyTheme(getInitialTheme());
+
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme);
 

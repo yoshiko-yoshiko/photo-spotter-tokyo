@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2, Stamp } from 'lucide-react';
 import { PhotoGallery } from '@/features/photos/components/photo-gallery';
 import { useSpot } from '@/features/spots/hooks/use-spots';
@@ -17,6 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function SpotDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromNotifications = (location.state as { from?: string })?.from === 'notifications';
   const { data: spot, isLoading } = useSpot(slug);
   const { data: idMap } = useSpotIdMap();
   const supabaseSpotId = idMap?.bySlug[slug ?? ''];
@@ -107,7 +109,7 @@ export default function SpotDetailPage() {
           )}
         </div>
 
-        <button onClick={() => navigate(-1)}
+        <button onClick={() => fromNotifications ? navigate('/profile', { replace: true }) : navigate(-1)}
           aria-label="戻る"
           className="absolute top-4 left-4 bg-card/80 backdrop-blur rounded-full w-10 h-10 shadow-sm flex items-center justify-center">
           <ChevronLeft className="w-5 h-5 text-foreground" />

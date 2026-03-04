@@ -107,7 +107,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
   return (
     <>
       <div
-        className="fixed inset-0 z-[100] bg-black/90 flex flex-col animate-fade-in"
+        className="fixed inset-0 z-[100] bg-black flex flex-col animate-fade-in"
         onClick={onClose}
       >
         {/* Close button */}
@@ -119,9 +119,9 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           <X className="w-6 h-6" />
         </button>
 
-        {/* Photo */}
+        {/* Photo — fixed height, never shrinks */}
         <div
-          className="flex-1 min-h-0 flex items-center justify-center p-4"
+          className="relative h-[45vh] shrink-0 flex items-center justify-center bg-black"
           onClick={(e) => {
             e.stopPropagation();
             handleDoubleTap();
@@ -139,7 +139,6 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
               <Camera className="w-16 h-16 text-white/20" />
             </div>
           )}
-          {/* Heart burst animation */}
           {heartBurst && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <Heart className="w-24 h-24 fill-white text-white drop-shadow-lg animate-like-burst" />
@@ -147,21 +146,21 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           )}
         </div>
 
-        {/* Info panel */}
+        {/* Info + Comments — scrollable bottom section */}
         <div
-          className="bg-black/60 backdrop-blur-sm px-4 py-3 animate-slide-up max-h-[50vh] overflow-y-auto"
+          className="flex-1 min-h-0 overflow-y-auto bg-card"
           onClick={(e) => e.stopPropagation()}
         >
           {/* User info + actions */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-2 min-w-0">
               <AvatarImage src={photoUser?.avatar_url} fallback={photoUser?.nickname || 'U'} className="w-8 h-8" />
               <div className="min-w-0">
-                <span className="text-white text-sm font-medium truncate block">
+                <span className="text-foreground text-sm font-medium truncate block">
                   {photoUser?.nickname || 'ユーザー'}
                 </span>
                 {photoUser?.bio && (
-                  <span className="text-white/60 text-xs truncate block">
+                  <span className="text-muted-foreground text-xs truncate block">
                     {photoUser.bio}
                   </span>
                 )}
@@ -172,9 +171,9 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   aria-label="写真を削除"
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  className="p-2 rounded-full hover:bg-muted transition-colors"
                 >
-                  <Trash2 className="w-5 h-5 text-white/70" />
+                  <Trash2 className="w-5 h-5 text-muted-foreground" />
                 </button>
               )}
               {isAuthenticated && !isOwnPhoto && (
@@ -185,13 +184,13 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
 
           {/* Caption */}
           {photo.caption && (
-            <p className="text-white/90 text-sm whitespace-pre-line mb-2">
+            <p className="text-foreground text-sm whitespace-pre-line px-4 pb-2">
               {photo.caption}
             </p>
           )}
 
           {/* Like + date */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-4 pb-2">
             <button
               onClick={handleLike}
               disabled={isPending}
@@ -200,20 +199,20 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
             >
               <Heart
                 className={`w-5 h-5 transition-all duration-200 ${
-                  localLiked ? 'fill-destructive text-destructive scale-110' : 'text-white/70'
+                  localLiked ? 'fill-destructive text-destructive scale-110' : 'text-muted-foreground'
                 }`}
               />
-              <span className={`text-sm ${localLiked ? 'text-destructive font-medium' : 'text-white/70'}`}>
+              <span className={`text-sm ${localLiked ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                 {localCount}
               </span>
             </button>
-            <span className="text-white/50 text-xs">
+            <span className="text-muted-foreground text-xs">
               {formatRelativeDate(photo.created_at)}
             </span>
           </div>
 
           {/* Comments section */}
-          <div className="mt-3 -mx-4 -mb-3 border-t border-white/10 bg-card rounded-t-xl pb-[env(safe-area-inset-bottom)]">
+          <div className="border-t border-border pb-[env(safe-area-inset-bottom)]">
             <PhotoComments photoId={photo.id} />
           </div>
         </div>
