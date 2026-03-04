@@ -1,7 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import type { ToggleLikeParams, ReportPhotoParams } from '@/features/photos/types';
+
+const PAGE_SIZE = 20;
 
 export function useSpotPhotos(spotId: string | undefined) {
   const { user } = useAuth();
@@ -10,7 +12,38 @@ export function useSpotPhotos(spotId: string | undefined) {
     queryKey: ['spot-photos', spotId],
     queryFn: async () => {
       if (!spotId) return [];
-      // Get blocked user ids
+      let blockedIds: string[] = [];
+      if (user) {
+        const { data: blocks } = await supabase
+          .from('user_blocks')
+          .select('blocked_id')
+          .eq('blocker_id', user.id);
+        blockedIds = (blocks || []).map(b => b.blocked_id);
+      }
+
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*, users:user_id(nickname, avatar_url, bio)')
+        .eq('spot_id', spotId)
+        .eq('is_public', true)
+        .is('deleted_at', null)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return (data || []).filter(p => !blockedIds.includes(p.user_id));
+    },
+    enabled: !!spotId,
+  });
+}
+
+export function useInfiniteSpotPhotos(spotId: string | undefined) {
+  const { user } = useAuth();
+
+  return useInfiniteQuery({
+    queryKey: ['spot-photos-infinite', spotId],
+    queryFn: async ({ pageParam = 0 }) => {
+      if (!spotId) return { photos: [], nextOffset: null };
+
       let blockedIds: string[] = [];
       if (user) {
         const { data: blocks } = await supabase
@@ -26,12 +59,18 @@ export function useSpotPhotos(spotId: string | undefined) {
         .eq('spot_id', spotId)
         .eq('is_public', true)
         .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(pageParam, pageParam + PAGE_SIZE - 1);
 
       if (error) throw error;
-      // Filter out blocked users
-      return (data || []).filter(p => !blockedIds.includes(p.user_id));
+
+      const filtered = (data || []).filter(p => !blockedIds.includes(p.user_id));
+      const nextOffset = (data || []).length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
+
+      return { photos: filtered, nextOffset };
     },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
     enabled: !!spotId,
   });
 }

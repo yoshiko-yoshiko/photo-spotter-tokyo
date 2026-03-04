@@ -1,11 +1,17 @@
 import type { Tables } from '@/lib/supabase/types';
 
+export type PhotoWithUser = Tables<'photos'> & {
+  users: { nickname: string; avatar_url: string | null; bio: string | null } | null;
+};
+
 export interface PhotoCardProps {
-  photo: Tables<'photos'>;
+  photo: PhotoWithUser;
+  onClick?: () => void;
 }
 
 export interface PhotoGalleryProps {
   spotId: string;
+  slug?: string;
 }
 
 export interface ToggleLikeParams {

@@ -485,6 +485,7 @@ export type Database = {
         Row: {
           auth_provider: string
           avatar_url: string | null
+          bio: string | null
           created_at: string
           deleted_at: string | null
           id: string
@@ -494,6 +495,7 @@ export type Database = {
         Insert: {
           auth_provider?: string
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           deleted_at?: string | null
           id: string
@@ -503,6 +505,7 @@ export type Database = {
         Update: {
           auth_provider?: string
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           deleted_at?: string | null
           id?: string

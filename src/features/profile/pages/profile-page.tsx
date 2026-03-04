@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, LogOut, Info, Edit2, Camera, MapPin, Award, Flame } from 'lucide-react';
+import { User, LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
 import { supabase } from '@/lib/supabase/client';
@@ -19,6 +19,8 @@ export default function ProfilePage() {
   const [stats, setStats] = useState<ProfileStats>({ stampCount: 0, photoCount: 0, spotCount: 0, rewardCount: 0 });
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
+  const [editingBio, setEditingBio] = useState(false);
+  const [newBio, setNewBio] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
   const [totalSpots, setTotalSpots] = useState(10);
@@ -30,11 +32,12 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) return;
 
-    supabase.from('users').select('nickname, avatar_url').eq('id', user.id).maybeSingle()
+    supabase.from('users').select('nickname, avatar_url, bio').eq('id', user.id).maybeSingle()
       .then(({ data }) => {
         if (data) {
           setProfile(data);
           setNewName(data.nickname);
+          setNewBio(data.bio || '');
         }
       });
 
@@ -70,6 +73,14 @@ export default function ProfilePage() {
     setEditingName(false);
   };
 
+  const handleSaveBio = async () => {
+    if (!user) return;
+    const bio = newBio.trim() || null;
+    await supabase.from('users').update({ bio }).eq('id', user.id);
+    setProfile(prev => prev ? { ...prev, bio } : prev);
+    setEditingBio(false);
+  };
+
   const displayName = isGuest ? 'ゲスト' : (profile?.nickname || 'ユーザー');
   const avatarUrl = profile?.avatar_url;
 
@@ -103,6 +114,9 @@ export default function ProfilePage() {
         </h2>
         {!isGuest && user?.email && (
           <p className="text-sm text-muted-foreground">{user.email}</p>
+        )}
+        {profile?.bio && (
+          <p className="text-sm text-muted-foreground mt-1 px-6 line-clamp-2">{profile.bio}</p>
         )}
       </div>
 
@@ -212,6 +226,13 @@ export default function ProfilePage() {
             <Edit2 className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">表示名の変更</span>
           </button>
+          <button
+            onClick={() => setEditingBio(true)}
+            className="w-full flex items-center gap-3 p-4 text-left"
+          >
+            <FileText className="w-5 h-5 text-muted-foreground" />
+            <span className="text-foreground">自己紹介の編集</span>
+          </button>
           <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-left">
             <LogOut className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">ログアウト</span>
@@ -240,6 +261,32 @@ export default function ProfilePage() {
                 キャンセル
               </button>
               <button onClick={handleSaveName} className="flex-1 rounded-full bg-primary text-primary-foreground py-2 font-medium">
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit bio modal */}
+      {editingBio && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/50 backdrop-blur-sm px-4">
+          <div className="bg-card rounded-2xl shadow-xl p-6 w-full max-w-sm animate-slide-up">
+            <h3 className="text-lg font-bold text-foreground mb-4">自己紹介の編集</h3>
+            <textarea
+              value={newBio}
+              onChange={(e) => setNewBio(e.target.value)}
+              maxLength={LIMITS.BIO_MAX}
+              rows={3}
+              placeholder="自己紹介を入力..."
+              className="w-full rounded-lg border border-border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none resize-none"
+            />
+            <p className="text-xs text-muted-foreground text-right mt-1">{newBio.length}/{LIMITS.BIO_MAX}</p>
+            <div className="flex gap-3 mt-4">
+              <button onClick={() => setEditingBio(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium">
+                キャンセル
+              </button>
+              <button onClick={handleSaveBio} className="flex-1 rounded-full bg-primary text-primary-foreground py-2 font-medium">
                 保存
               </button>
             </div>
