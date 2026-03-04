@@ -1,7 +1,7 @@
 import type { Tables } from '@/lib/supabase/types';
 
 export type PhotoWithUser = Tables<'photos'> & {
-  users: { nickname: string; avatar_url: string | null } | null;
+  users: { nickname: string; avatar_url: string | null; bio: string | null } | null;
 };
 
 export interface PhotoCardProps {

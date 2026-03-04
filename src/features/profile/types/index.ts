@@ -8,4 +8,5 @@ export interface ProfileStats {
 export interface UserProfile {
   nickname: string;
   avatar_url: string | null;
+  bio: string | null;
 }

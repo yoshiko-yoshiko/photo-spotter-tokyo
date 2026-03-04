@@ -17,6 +17,7 @@ interface PhotoDetailModalProps {
   user: {
     nickname: string;
     avatar_url: string | null;
+    bio: string | null;
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -167,9 +168,16 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
               ) : (
                 <div className="w-8 h-8 rounded-full bg-white/20 shrink-0" />
               )}
-              <span className="text-white text-sm font-medium truncate">
-                {photoUser?.nickname || 'ユーザー'}
-              </span>
+              <div className="min-w-0">
+                <span className="text-white text-sm font-medium truncate block">
+                  {photoUser?.nickname || 'ユーザー'}
+                </span>
+                {photoUser?.bio && (
+                  <span className="text-white/60 text-xs truncate block">
+                    {photoUser.bio}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {isAuthenticated && !isOwnPhoto && (
