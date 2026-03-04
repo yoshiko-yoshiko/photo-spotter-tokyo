@@ -38,12 +38,19 @@ export function usePhotoComments(photoId: string) {
         .is('deleted_at', null)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        // photo_comments table may not exist yet — return empty instead of crashing
+        if (error.code === '42P01' || error.message?.includes('relation') || error.code === 'PGRST204') {
+          return [];
+        }
+        throw error;
+      }
 
       const comments = (data || []) as unknown as CommentWithUser[];
       return comments.filter(c => !blockedIds.includes(c.user_id));
     },
     enabled: !!photoId,
+    retry: false,
   });
 }
 
