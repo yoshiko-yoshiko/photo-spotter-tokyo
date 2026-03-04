@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { memo, useState, useRef } from 'react';
 import { Heart, Camera } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { TIMING } from '@/lib/constants';
@@ -7,7 +7,7 @@ import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
 import type { PhotoCardProps } from '@/features/photos/types';
 
-export function PhotoCard({ photo, onClick }: PhotoCardProps) {
+export const PhotoCard = memo(function PhotoCard({ photo, onClick }: PhotoCardProps) {
   const { user, isAuthenticated } = useAuth();
   const {
     localLiked,
@@ -102,4 +102,4 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
-}
+});

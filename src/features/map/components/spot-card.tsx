@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Camera, Check } from 'lucide-react';
 import { CATEGORY_COLORS } from '@/features/map/lib/map-utils';
 import type { SpotCardProps } from '@/features/map/types';
 
-export function SpotCard({ spot, isVisited, onClick, variant = 'default' }: SpotCardProps) {
+export const SpotCard = memo(function SpotCard({ spot, isVisited, onClick, variant = 'default' }: SpotCardProps) {
   const color = CATEGORY_COLORS[spot.category] || '#0D9488';
   const [imgError, setImgError] = useState(false);
 
@@ -81,4 +81,4 @@ export function SpotCard({ spot, isVisited, onClick, variant = 'default' }: Spot
       </div>
     </div>
   );
-}
+});

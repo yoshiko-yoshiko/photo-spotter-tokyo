@@ -32,7 +32,7 @@ export default function MapPage() {
   const { data: idMap } = useSpotIdMap();
   useSpotIdSync(spots);
   const { data: stamps = [] } = useUserStamps();
-  const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
+  const stampedSpotIds = useMemo(() => new Set(stamps.map(s => s.spot_id)), [stamps]);
 
   const [viewMode, setViewMode] = useState<MapViewMode>('map');
   const [searchQuery, setSearchQuery] = useState('');
