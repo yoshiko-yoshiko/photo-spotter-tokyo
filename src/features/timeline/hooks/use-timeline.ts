@@ -2,8 +2,9 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import type { TimelinePost } from '@/features/timeline/types';
+import { PAGINATION } from '@/lib/constants';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = PAGINATION.PAGE_SIZE;
 
 export function useTimeline() {
   const { user } = useAuth();

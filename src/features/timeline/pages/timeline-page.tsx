@@ -1,54 +1,29 @@
-import { useRef, useCallback, useState, useEffect } from 'react';
+import { useRef, useCallback, useState } from 'react';
 import { Heart, Camera, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAuth } from '@/lib/hooks/use-auth';
-import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
+import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { useTimeline } from '@/features/timeline/hooks/use-timeline';
 import type { TimelinePost } from '@/features/timeline/types';
 
 function TimelineCard({ post }: { post: TimelinePost }) {
-  const { isGuest, isAuthenticated } = useAuth();
-  const isLiked = usePhotoLikes(post.id);
-  const toggleLike = useToggleLike();
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [heartBurst, setHeartBurst] = useState(false);
-  const [localLiked, setLocalLiked] = useState(isLiked);
-  const [localCount, setLocalCount] = useState(post.likes_count ?? 0);
+  const {
+    localLiked,
+    localCount,
+    heartBurst,
+    isPending,
+    showAuthModal,
+    setShowAuthModal,
+    handleLike,
+    handleDoubleTap,
+  } = usePhotoLikeState({
+    photoId: post.id,
+    initialLikesCount: post.likes_count ?? 0,
+  });
+
   const [imgError, setImgError] = useState(false);
-  const lastTapRef = useRef(0);
-
-  useEffect(() => {
-    setLocalLiked(isLiked);
-  }, [isLiked]);
-
-  useEffect(() => {
-    setLocalCount(post.likes_count ?? 0);
-  }, [post.likes_count]);
-
-  const handleLike = () => {
-    if (isGuest || !isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-    if (!localLiked) {
-      setHeartBurst(true);
-      setTimeout(() => setHeartBurst(false), 600);
-    }
-    setLocalLiked(!localLiked);
-    setLocalCount(prev => localLiked ? prev - 1 : prev + 1);
-    toggleLike.mutate({ photoId: post.id, isLiked: localLiked });
-  };
-
-  const handleDoubleTap = () => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      if (!localLiked) handleLike();
-    }
-    lastTapRef.current = now;
-  };
 
   const nickname = post.users?.nickname ?? 'ユーザー';
   const avatarUrl = post.users?.avatar_url;
@@ -102,7 +77,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
           <div className="flex items-center gap-4">
             <button
               onClick={handleLike}
-              disabled={toggleLike.isPending}
+              disabled={isPending}
               aria-label="いいね"
               className="flex items-center gap-1.5 text-sm transition-all active:scale-125"
             >

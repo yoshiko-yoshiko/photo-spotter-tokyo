@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Heart, Camera } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { TIMING } from '@/lib/constants';
 import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
@@ -37,7 +38,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
     }
     if (!localLiked) {
       setHeartBurst(true);
-      setTimeout(() => setHeartBurst(false), 600);
+      setTimeout(() => setHeartBurst(false), TIMING.LIKE_BURST_DURATION);
     }
     setLocalLiked(!localLiked);
     setLocalCount(prev => localLiked ? prev - 1 : prev + 1);
@@ -49,7 +50,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
     const timeSinceLastTap = now - lastTapRef.current;
     lastTapRef.current = now;
 
-    if (timeSinceLastTap < 300) {
+    if (timeSinceLastTap < TIMING.DOUBLE_TAP_DELAY) {
       // Double-tap: cancel pending single-tap, fire like
       if (singleTapTimerRef.current) {
         clearTimeout(singleTapTimerRef.current);
@@ -61,7 +62,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
       singleTapTimerRef.current = setTimeout(() => {
         singleTapTimerRef.current = null;
         onClick?.();
-      }, 300);
+      }, TIMING.DOUBLE_TAP_DELAY);
     }
   };
 
