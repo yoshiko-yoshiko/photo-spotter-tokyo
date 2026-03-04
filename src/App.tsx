@@ -17,7 +17,7 @@ import DebugPage from "@/features/debug/pages/debug-page";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-const TimelinePage = lazy(() => import('@/features/timeline/pages/timeline-page'));
+const TimelinePage = lazy(() => import('@/features/timeline/pages/timeline-page').then(m => ({ default: m.TimelinePage })));
 const SpotPhotosPage = lazy(() => import('@/features/photos/pages/spot-photos-page'));
 
 const queryClient = new QueryClient({
