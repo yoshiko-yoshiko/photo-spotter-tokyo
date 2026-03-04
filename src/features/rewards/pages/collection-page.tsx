@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSpots } from '@/features/spots/hooks/use-spots';
+import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useRewards, useUserRewards } from '@/features/rewards/hooks/use-rewards';
@@ -15,6 +16,7 @@ export default function CollectionPage() {
   const navigate = useNavigate();
   const { user, isGuest } = useAuth();
   const { data: spots = [], isLoading: spotsLoading } = useSpots();
+  const { data: idMap } = useSpotIdMap();
   const { data: stamps = [], isLoading: stampsLoading } = useUserStamps();
   const { data: rewards = [], isLoading: rewardsLoading } = useRewards();
   const { data: userRewards = [], isLoading: userRewardsLoading } = useUserRewards();
@@ -100,7 +102,7 @@ export default function CollectionPage() {
       {tab === 'stamps' && !isLoading && (
         <div className="px-3 md:px-8 pt-4 grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 max-w-4xl mx-auto">
           {spots.map(spot => {
-            const isCollected = stampedSpotIds.has(spot.id);
+            const isCollected = stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '');
             const color = CATEGORY_COLORS[spot.category] || '#0D9488';
             return (
               <button

@@ -251,6 +251,7 @@ export type Database = {
           is_active: boolean
           latitude: number
           longitude: number
+          microcms_id: string | null
           name: string
           photo_tip: string | null
           qr_code: string | null
@@ -270,6 +271,7 @@ export type Database = {
           is_active?: boolean
           latitude: number
           longitude: number
+          microcms_id?: string | null
           name: string
           photo_tip?: string | null
           qr_code?: string | null
@@ -289,6 +291,7 @@ export type Database = {
           is_active?: boolean
           latitude?: number
           longitude?: number
+          microcms_id?: string | null
           name?: string
           photo_tip?: string | null
           qr_code?: string | null

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import { useSpots } from '@/features/spots/hooks/use-spots';
+import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { CATEGORY_COLORS, escapeHtml, createMarkerElement } from '@/features/map/lib/map-utils';
 import { useMapInit } from '@/features/map/hooks/use-map-init';
@@ -19,6 +20,7 @@ const AREAS = ['全エリア', '港区', '台東区', '渋谷区', '墨田区', 
 export default function MapPage() {
   const navigate = useNavigate();
   const { data: spots = [], isLoading } = useSpots();
+  const { data: idMap } = useSpotIdMap();
   const { data: stamps = [] } = useUserStamps();
   const stampedSpotIds = new Set(stamps.map(s => s.spot_id));
 
@@ -48,7 +50,7 @@ export default function MapPage() {
 
     filteredSpots.forEach(spot => {
       const color = CATEGORY_COLORS[spot.category] || '#0D9488';
-      const isVisited = stampedSpotIds.has(spot.id);
+      const isVisited = stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '');
 
       const el = createMarkerElement(spot.name, color, isVisited);
 
@@ -82,7 +84,7 @@ export default function MapPage() {
 
       markersRef.current.push(marker);
     });
-  }, [filteredSpots, stampedSpotIds, viewMode, navigate, mapRef, markersRef]);
+  }, [filteredSpots, stampedSpotIds, idMap, viewMode, navigate, mapRef, markersRef]);
 
   if (!MAPBOX_TOKEN) {
     return (
@@ -202,7 +204,7 @@ export default function MapPage() {
           ) : (
             <div className="space-y-3">
               {filteredSpots.map(spot => (
-                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(spot.id)} onClick={() => navigate(`/spots/${spot.slug}`)} />
+                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '')} onClick={() => navigate(`/spots/${spot.slug}`)} />
               ))}
             </div>
           )}

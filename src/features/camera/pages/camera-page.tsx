@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Camera, ImagePlus, X, MapPin, Upload, Loader2 } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useSpots } from '@/features/spots/hooks/use-spots';
+import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
 import { usePhotoUpload } from '@/features/camera/hooks/use-photo-upload';
 import { useUploadGuard } from '@/features/camera/hooks/use-upload-guard';
 import { validateImage, resizeImage } from '@/features/camera/lib/image-utils';
@@ -16,6 +17,7 @@ export default function CameraPage() {
   const navigate = useNavigate();
   const { user, isGuest } = useAuth();
   const { data: spots = [] } = useSpots();
+  const { data: idMap } = useSpotIdMap();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadPhoto, isUploading, newRewards, showCelebration, dismissCelebration } = usePhotoUpload();
 
@@ -66,7 +68,8 @@ export default function CameraPage() {
     setStep('uploading');
 
     try {
-      await uploadPhoto(file, selectedSpotId, caption);
+      const supabaseId = idMap?.byMicrocmsId[selectedSpotId] ?? selectedSpotId;
+      await uploadPhoto(file, supabaseId, caption);
       setStep('done');
     } catch {
       setStep('select-spot');

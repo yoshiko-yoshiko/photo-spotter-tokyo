@@ -30,3 +30,4 @@ dist-ssr
 
 # Supabase local (SQL migrations/seeds are managed locally, not in git)
 supabase/
+docs/

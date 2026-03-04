@@ -1,9 +1,9 @@
-import type { Tables } from '@/lib/supabase/types';
+import type { Spot } from '@/lib/microcms/types';
 
 export type MapViewMode = 'map' | 'list';
 
 export interface SpotCardProps {
-  spot: Tables<'spots'>;
+  spot: Spot;
   isVisited: boolean;
   onClick: () => void;
 }

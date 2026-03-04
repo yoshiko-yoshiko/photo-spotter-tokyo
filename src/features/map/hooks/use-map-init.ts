@@ -9,13 +9,13 @@ import {
   MAP_CONFIG,
 } from '@/features/map/lib/map-utils';
 import { env } from '@/lib/env';
-import type { Tables } from '@/lib/supabase/types';
+import type { Spot } from '@/lib/microcms/types';
 
 const MAPBOX_TOKEN = env.MAPBOX_TOKEN;
 
 interface UseMapInitOptions {
   viewMode: 'map' | 'list';
-  spots: Tables<'spots'>[];
+  spots: Spot[];
   onBanner: (msg: string) => void;
 }
 

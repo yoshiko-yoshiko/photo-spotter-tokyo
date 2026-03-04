@@ -1,18 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase/client';
+import { cmsClient } from '@/lib/microcms/client';
+import type { CMSSpot } from '@/lib/microcms/types';
+import { cmsSpotToSpot } from '@/lib/microcms/utils';
 
 export function useSpots() {
   return useQuery({
     queryKey: ['spots'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('spots')
-        .select('*')
-        .eq('is_active', true)
-        .order('name');
-      if (error) throw error;
-      return data;
+      const res = await cmsClient.getList<CMSSpot>({
+        endpoint: 'spots',
+        queries: { limit: 100 },
+      });
+      return res.contents.map(cmsSpotToSpot);
     },
+    staleTime: 1000 * 60 * 10,
   });
 }
 
@@ -21,13 +22,12 @@ export function useSpot(slug: string | undefined) {
     queryKey: ['spots', slug],
     queryFn: async () => {
       if (!slug) throw new Error('No spot slug');
-      const { data, error } = await supabase
-        .from('spots')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-      if (error) throw error;
-      return data;
+      const res = await cmsClient.getList<CMSSpot>({
+        endpoint: 'spots',
+        queries: { filters: `slug[equals]${slug}`, limit: 1 },
+      });
+      if (res.contents.length === 0) throw new Error('Spot not found');
+      return cmsSpotToSpot(res.contents[0]);
     },
     enabled: !!slug,
   });

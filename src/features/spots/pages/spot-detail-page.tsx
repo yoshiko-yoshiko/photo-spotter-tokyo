@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
 import { PhotoGallery } from '@/features/photos/components/photo-gallery';
 import { useSpot } from '@/features/spots/hooks/use-spots';
+import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
 import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useCheckin } from '@/features/spots/hooks/use-checkin';
@@ -16,13 +17,15 @@ export default function SpotDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { data: spot, isLoading } = useSpot(slug);
+  const { data: idMap } = useSpotIdMap();
+  const supabaseSpotId = idMap?.bySlug[slug ?? ''];
   const { data: stamps = [] } = useUserStamps();
   const { isGuest } = useAuth();
   const { checkin, isCheckinLoading, newRewards, showCelebration, dismissCelebration } = useCheckin();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [heroImgError, setHeroImgError] = useState(false);
 
-  const isVisited = stamps.some(s => s.spot_id === spot?.id);
+  const isVisited = stamps.some(s => s.spot_id === supabaseSpotId);
 
   if (isLoading) {
     return (
@@ -50,7 +53,8 @@ export default function SpotDetailPage() {
     }
     if (isVisited) return;
 
-    await checkin(spot.id, Number(spot.latitude), Number(spot.longitude), spot.radius_m);
+    if (!supabaseSpotId) return;
+    await checkin(supabaseSpotId, Number(spot.latitude), Number(spot.longitude), spot.radius_m);
   };
 
   const handleShare = async () => {
@@ -142,7 +146,7 @@ export default function SpotDetailPage() {
         )}
 
         {/* Photo Gallery */}
-        <PhotoGallery spotId={spot.id} />
+        <PhotoGallery spotId={supabaseSpotId ?? ''} />
       </div>
 
       {/* CTA */}
@@ -153,7 +157,7 @@ export default function SpotDetailPage() {
               <Check className="w-4 h-4" /> スタンプ取得済み
             </div>
             <button
-              onClick={() => navigate(`/camera?spot=${spot.id}`)}
+              onClick={() => navigate(`/camera?spot=${supabaseSpotId}`)}
               className="w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Camera className="w-5 h-5" /> もう一枚撮る
