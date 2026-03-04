@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
+import { PhotoComments } from './photo-comments';
 
 interface PhotoDetailModalProps {
   photo: {
@@ -213,6 +214,11 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
             <span className="text-white/50 text-xs">
               {formatRelativeDate(photo.created_at)}
             </span>
+          </div>
+
+          {/* Comments section */}
+          <div className="mt-3 -mx-4 border-t border-white/10 bg-card rounded-t-xl">
+            <PhotoComments photoId={photo.id} />
           </div>
         </div>
       </div>
