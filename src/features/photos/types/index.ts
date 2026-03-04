@@ -6,6 +6,7 @@ export interface PhotoCardProps {
 
 export interface PhotoGalleryProps {
   spotId: string;
+  slug?: string;
 }
 
 export interface ToggleLikeParams {

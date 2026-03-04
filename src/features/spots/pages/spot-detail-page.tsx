@@ -170,7 +170,7 @@ export default function SpotDetailPage() {
         )}
 
         {/* Photo Gallery */}
-        <PhotoGallery spotId={supabaseSpotId ?? ''} />
+        <PhotoGallery spotId={supabaseSpotId ?? ''} slug={slug} />
       </div>
 
       {/* Stamp animation */}
