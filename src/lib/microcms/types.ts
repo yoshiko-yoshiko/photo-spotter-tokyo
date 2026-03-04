@@ -7,12 +7,9 @@ export type CMSSpot = {
   description: string;
   category: string[];
   area: string;
-  latitude: number;
-  longitude: number;
   address?: string;
   photoTip?: string;
   bestTime?: string;
-  radiusM: number;
   image?: { url: string; width: number; height: number };
   imageUrl?: string;
 } & MicroCMSListContent;

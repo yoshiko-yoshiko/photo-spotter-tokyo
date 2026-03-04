@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2 } from 'lucide-react';
+import { ChevronLeft, Share2, Camera, Clock, MapPin, Check, Navigation, Loader2, Stamp } from 'lucide-react';
 import { PhotoGallery } from '@/features/photos/components/photo-gallery';
 import { useSpot } from '@/features/spots/hooks/use-spots';
 import { useSpotIdMap } from '@/features/spots/hooks/use-spot-id-map';
@@ -10,8 +10,9 @@ import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
 import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
 import { CATEGORY_COLORS, getRouteUrl } from '@/features/map/lib/map-utils';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function SpotDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -26,11 +27,32 @@ export default function SpotDetailPage() {
   const [heroImgError, setHeroImgError] = useState(false);
 
   const isVisited = stamps.some(s => s.spot_id === supabaseSpotId);
+  const wasVisitedRef = useRef(isVisited);
+  const [showStampAnim, setShowStampAnim] = useState(false);
+
+  useEffect(() => {
+    if (!wasVisitedRef.current && isVisited) {
+      setShowStampAnim(true);
+      const timer = setTimeout(() => setShowStampAnim(false), 2000);
+      return () => clearTimeout(timer);
+    }
+    wasVisitedRef.current = isVisited;
+  }, [isVisited]);
 
   if (isLoading) {
     return (
-      <div className="min-h-[100dvh] flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100dvh] bg-background pb-24">
+        <Skeleton className="w-full aspect-[4/3] md:aspect-[16/9]" />
+        <div className="px-4 pt-4 space-y-3">
+          <Skeleton className="h-8 w-3/4" />
+          <div className="flex gap-2">
+            <Skeleton className="h-5 w-20 rounded-full" />
+            <Skeleton className="h-5 w-16" />
+          </div>
+          <Skeleton className="h-32 w-full rounded-xl mt-4" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       </div>
     );
   }
@@ -115,27 +137,29 @@ export default function SpotDetailPage() {
         </div>
 
         {spot.photo_tip && (
-          <div className="mt-6">
-            <h2 className="text-lg font-bold text-foreground">📸 撮影ガイド</h2>
-            <p className="text-muted-foreground leading-relaxed mt-2">{spot.photo_tip}</p>
+          <div className="mt-6 rounded-xl border border-border bg-card p-4 border-l-4 border-l-teal-500">
+            <h2 className="text-base font-bold text-foreground flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-teal-500" /> 撮影ガイド
+            </h2>
+            <p className="text-muted-foreground leading-relaxed mt-2 text-sm">{spot.photo_tip}</p>
           </div>
         )}
 
         {spot.best_time && (
-          <div className="mt-4">
-            <h3 className="text-base font-medium text-foreground flex items-center gap-1.5">
-              <Clock className="w-4 h-4" /> ベスト時間帯
+          <div className="mt-3 rounded-xl border border-border bg-card p-4 border-l-4 border-l-amber-500">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-amber-500" /> ベスト時間帯
             </h3>
-            <p className="text-muted-foreground mt-1">{spot.best_time}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{spot.best_time}</p>
           </div>
         )}
 
         {spot.address && (
-          <div className="mt-4">
-            <h3 className="text-base font-medium text-foreground flex items-center gap-1.5">
-              <MapPin className="w-4 h-4" /> アクセス
+          <div className="mt-3 rounded-xl border border-border bg-card p-4 border-l-4 border-l-slate-500">
+            <h3 className="text-base font-bold text-foreground flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-slate-500" /> アクセス
             </h3>
-            <p className="text-muted-foreground mt-1">{spot.address}</p>
+            <p className="text-muted-foreground mt-1 text-sm">{spot.address}</p>
             <p className="text-xs text-muted-foreground mt-0.5">📍 チェックイン可能範囲: {spot.radius_m}m 以内</p>
             <a href={getRouteUrl(Number(spot.latitude), Number(spot.longitude))}
               target="_blank" rel="noopener noreferrer"
@@ -148,6 +172,18 @@ export default function SpotDetailPage() {
         {/* Photo Gallery */}
         <PhotoGallery spotId={supabaseSpotId ?? ''} />
       </div>
+
+      {/* Stamp animation */}
+      {showStampAnim && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="animate-stamp-in">
+            <div className="w-24 h-24 rounded-full bg-stamp-gold/20 flex items-center justify-center">
+              <Stamp className="w-14 h-14 text-stamp-gold" />
+            </div>
+            <p className="text-center text-stamp-gold font-bold mt-2 text-lg">GET!</p>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-3xl md:mx-auto space-y-2">

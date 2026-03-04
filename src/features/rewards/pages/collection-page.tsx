@@ -109,7 +109,7 @@ export default function CollectionPage() {
                 key={spot.id}
                 onClick={() => navigate(`/spots/${spot.slug}`)}
                 className={`rounded-xl overflow-hidden border transition-all ${
-                  isCollected ? 'border-primary shadow-sm' : 'border-border opacity-50 grayscale'
+                  isCollected ? 'border-primary shadow-sm' : 'border-border opacity-75 grayscale-[60%]'
                 }`}
               >
                 <div className="relative aspect-square bg-muted">
@@ -127,8 +127,8 @@ export default function CollectionPage() {
                     </div>
                   )}
                   {!isCollected && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <Lock className="w-6 h-6 text-muted-foreground/50" />
+                    <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-foreground/40 flex items-center justify-center">
+                      <Lock className="w-3 h-3 text-white" />
                     </div>
                   )}
                 </div>

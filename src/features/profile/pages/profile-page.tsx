@@ -121,7 +121,7 @@ export default function ProfilePage() {
 
       {/* Stats grid */}
       {loading ? (
-        <div className="mx-4 mt-4 grid grid-cols-4 gap-2">
+        <div className="mx-4 mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="bg-card border border-border rounded-2xl p-3 text-center">
               <Skeleton className="w-5 h-5 mx-auto rounded-full" />
@@ -131,7 +131,7 @@ export default function ProfilePage() {
           ))}
         </div>
       ) : (
-        <div className="mx-4 mt-4 grid grid-cols-4 gap-2">
+        <div className="mx-4 mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
           {statItems.map(({ icon: Icon, label, value, color }) => (
             <div key={label} className="bg-card border border-border rounded-2xl p-3 text-center">
               <Icon className={`w-5 h-5 mx-auto ${color}`} />

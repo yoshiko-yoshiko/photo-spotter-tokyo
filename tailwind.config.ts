@@ -105,6 +105,12 @@ export default {
           "80%": { transform: "scale(1.05)", opacity: "0.8" },
           "100%": { transform: "scale(1)", opacity: "0" },
         },
+        "stamp-in": {
+          "0%": { transform: "scale(0) rotate(-15deg)", opacity: "0" },
+          "50%": { transform: "scale(1.2) rotate(5deg)", opacity: "1" },
+          "70%": { transform: "scale(0.9) rotate(-2deg)", opacity: "1" },
+          "100%": { transform: "scale(1) rotate(0deg)", opacity: "1" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,6 +119,7 @@ export default {
         "fade-out": "fade-out 0.5s ease-out",
         "slide-up": "slide-up 0.4s ease-out",
         "like-burst": "like-burst 0.6s ease-out forwards",
+        "stamp-in": "stamp-in 0.5s ease-out forwards",
       },
     },
   },

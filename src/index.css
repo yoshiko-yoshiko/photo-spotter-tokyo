@@ -95,3 +95,20 @@
 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mapbox popup close button */
+.mapboxgl-popup-close-button {
+  font-size: 18px;
+  padding: 4px 8px;
+  color: hsl(var(--muted-foreground));
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  line-height: 1;
+  right: 4px;
+  top: 4px;
+}
+.mapboxgl-popup-close-button:hover {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}

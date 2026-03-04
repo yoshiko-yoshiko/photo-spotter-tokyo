@@ -6,4 +6,5 @@ export interface SpotCardProps {
   spot: Spot;
   isVisited: boolean;
   onClick: () => void;
+  variant?: 'default' | 'compact';
 }

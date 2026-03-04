@@ -70,12 +70,13 @@ export function escapeHtml(str: string): string {
 }
 
 export function createMarkerElement(spotName: string, color: string, isVisited: boolean): HTMLDivElement {
+  const safeColor = /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#EF4444';
   const el = document.createElement('div');
   el.style.width = '80px';
   el.className = 'flex flex-col items-center cursor-pointer';
   el.innerHTML = `
     <div class="relative">
-      <div style="background:${color}" class="w-10 h-10 rounded-full border-2 border-white shadow-md flex items-center justify-center">
+      <div style="background:${safeColor}" class="w-10 h-10 rounded-full border-2 border-white shadow-md flex items-center justify-center">
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
       </div>
       ${isVisited ? '<div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-amber-500 flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>' : ''}

@@ -108,28 +108,17 @@ export default function CameraPage() {
     <div className="bg-surface min-h-full">
       {/* Header */}
       <div className="bg-card px-4 py-3 flex items-center justify-between border-b border-border">
-        <h1 className="text-lg font-bold text-foreground">📷 写真を投稿</h1>
-        {step !== 'select-photo' && step !== 'uploading' && (
+        <h1 className="text-lg font-bold text-foreground">
+          {step === 'select-photo' && '📷 写真を選択'}
+          {step === 'select-spot' && '📍 スポットを選択'}
+          {step === 'uploading' && '⏳ アップロード中'}
+          {step === 'done' && '🎉 投稿完了'}
+        </h1>
+        {step !== 'select-photo' && step !== 'uploading' && step !== 'done' && (
           <button onClick={resetFlow} aria-label="リセット" className="text-muted-foreground">
             <X className="w-5 h-5" />
           </button>
         )}
-      </div>
-
-      {/* Step indicator */}
-      <div className="px-4 py-3 flex gap-2">
-        {['写真選択', 'スポット選択', '投稿'].map((label, i) => {
-          const stepIdx = i;
-          const currentIdx = step === 'select-photo' ? 0 : step === 'select-spot' ? 1 : 2;
-          return (
-            <div key={label} className="flex-1">
-              <div className={`h-1 rounded-full transition-colors ${stepIdx <= currentIdx ? 'bg-primary' : 'bg-muted'}`} />
-              <p className={`text-xs mt-1 ${stepIdx <= currentIdx ? 'text-primary font-medium' : 'text-muted-foreground'}`}>
-                {label}
-              </p>
-            </div>
-          );
-        })}
       </div>
 
       {/* Step: Select Photo */}

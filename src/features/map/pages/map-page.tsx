@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import mapboxgl from 'mapbox-gl';
 import { useSpots } from '@/features/spots/hooks/use-spots';
@@ -7,19 +7,27 @@ import { useUserStamps } from '@/features/spots/hooks/use-user-stamps';
 import { CATEGORY_COLORS, escapeHtml, createMarkerElement } from '@/features/map/lib/map-utils';
 import { useMapInit } from '@/features/map/hooks/use-map-init';
 import { SpotCard } from '@/features/map/components/spot-card';
-import { Search, Map, List, Navigation, Loader2 } from 'lucide-react';
+import { Search, Map, List, Navigation, Loader2, X } from 'lucide-react';
 import type { MapViewMode } from '@/features/map/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { env } from '@/lib/env';
 
 const MAPBOX_TOKEN = env.MAPBOX_TOKEN;
 
-const CATEGORIES = ['全て', 'ランドマーク', '寺社・歴史', '自然・公園', '都市・カルチャー'] as const;
-const AREAS = ['全エリア', '港区', '台東区', '渋谷区', '墨田区', '千代田区', '新宿区'] as const;
-
 export default function MapPage() {
   const navigate = useNavigate();
   const { data: spots = [], isLoading } = useSpots();
+
+  // カテゴリ・エリアをスポットデータから動的生成
+  const categories = useMemo(() => {
+    const cats = new Set(spots.map(s => s.category).filter(Boolean));
+    return ['全て', ...Array.from(cats).sort()];
+  }, [spots]);
+
+  const areas = useMemo(() => {
+    const areaSet = new Set(spots.map(s => s.area).filter(Boolean));
+    return ['全エリア', ...Array.from(areaSet).sort()];
+  }, [spots]);
   const { data: idMap } = useSpotIdMap();
   useSpotIdSync(spots);
   const { data: stamps = [] } = useUserStamps();
@@ -35,7 +43,8 @@ export default function MapPage() {
   const { mapContainer, mapRef, markersRef, handleLocate } = useMapInit({ viewMode, spots, onBanner });
 
   const filteredSpots = spots.filter(spot => {
-    const matchSearch = !searchQuery || spot.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const q = searchQuery.toLowerCase();
+    const matchSearch = !searchQuery || spot.name.toLowerCase().includes(q) || (spot.area || '').toLowerCase().includes(q) || (spot.description || '').toLowerCase().includes(q) || (spot.photo_tip || '').toLowerCase().includes(q);
     const matchCategory = selectedCategory === '全て' || spot.category === selectedCategory;
     const matchArea = selectedArea === '全エリア' || spot.area === selectedArea;
     return matchSearch && matchCategory && matchArea;
@@ -50,12 +59,13 @@ export default function MapPage() {
     markersRef.current = [];
 
     filteredSpots.forEach(spot => {
-      const color = CATEGORY_COLORS[spot.category] || '#0D9488';
+      const rawColor = CATEGORY_COLORS[spot.category] || '#0D9488';
+      const color = /^#[0-9a-fA-F]{6}$/.test(rawColor) ? rawColor : '#EF4444';
       const isVisited = stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '');
 
       const el = createMarkerElement(spot.name, color, isVisited);
 
-      const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '220px', closeButton: false })
+      const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '220px', closeButton: true })
         .setHTML(`
           <div class="cursor-pointer" id="popup-${escapeHtml(spot.id)}">
             <img src="${escapeHtml(spot.image_url || '')}" alt="${escapeHtml(spot.name)}" class="w-full aspect-video object-cover rounded-t-lg" onerror="this.style.display='none'" />
@@ -131,12 +141,13 @@ export default function MapPage() {
             </button>
           </div>
         </div>
-        <div className="flex gap-1 overflow-x-auto no-scrollbar">
-          {CATEGORIES.map(cat => (
+        {/* Category filters */}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {categories.map(cat => (
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
                 selectedCategory === cat
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
@@ -145,12 +156,14 @@ export default function MapPage() {
               {cat}
             </button>
           ))}
-          <span className="text-border mx-0.5 self-center">|</span>
-          {AREAS.map(area => (
+        </div>
+        {/* Area filters */}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {areas.map(area => (
             <button
               key={area}
               onClick={() => setSelectedArea(area)}
-              className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`shrink-0 rounded-full px-3 py-2 text-sm font-medium transition-colors ${
                 selectedArea === area
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground'
@@ -160,6 +173,20 @@ export default function MapPage() {
             </button>
           ))}
         </div>
+        {/* Active filter indicator */}
+        {(selectedCategory !== '全て' || selectedArea !== '全エリア') && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              絞り込み中: {selectedCategory !== '全て' ? selectedCategory : ''}{selectedCategory !== '全て' && selectedArea !== '全エリア' ? ' · ' : ''}{selectedArea !== '全エリア' ? selectedArea : ''}
+            </span>
+            <button
+              onClick={() => { setSelectedCategory('全て'); setSelectedArea('全エリア'); }}
+              className="text-xs text-primary font-medium flex items-center gap-0.5"
+            >
+              <X className="w-3 h-3" /> クリア
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Info banner */}
@@ -201,11 +228,21 @@ export default function MapPage() {
               ))}
             </div>
           ) : filteredSpots.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">スポットが見つかりません</div>
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">スポットが見つかりません</p>
+              {(selectedCategory !== '全て' || selectedArea !== '全エリア' || searchQuery) && (
+                <button
+                  onClick={() => { setSelectedCategory('全て'); setSelectedArea('全エリア'); setSearchQuery(''); }}
+                  className="text-primary text-sm mt-2 font-medium"
+                >
+                  フィルターをリセット
+                </button>
+              )}
+            </div>
           ) : (
             <div className="space-y-3">
               {filteredSpots.map(spot => (
-                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '')} onClick={() => navigate(`/spots/${spot.slug}`)} />
+                <SpotCard key={spot.id} spot={spot} isVisited={stampedSpotIds.has(idMap?.byMicrocmsId[spot.id] ?? '')} onClick={() => navigate(`/spots/${spot.slug}`)} variant="compact" />
               ))}
             </div>
           )}

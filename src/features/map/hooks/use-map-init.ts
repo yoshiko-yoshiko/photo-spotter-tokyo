@@ -26,75 +26,72 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
 
-  const createMap = useCallback(
-    (center: [number, number], zoom: number, userLoc: { latitude: number; longitude: number } | null) => {
-      if (!mapContainer.current) return;
-
-      mapboxgl.accessToken = MAPBOX_TOKEN;
-      const map = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/mapbox/streets-v12',
-        center,
-        zoom,
-      });
-
-      if (userLoc) {
-        const el = document.createElement('div');
-        el.className = 'w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow animate-pulse';
-        new mapboxgl.Marker({ element: el }).setLngLat([userLoc.longitude, userLoc.latitude]).addTo(map);
-
-        const currentSpots = spotsRef.current;
-        if (currentSpots.length > 0) {
-          let minDist = Infinity;
-          for (const s of currentSpots) {
-            const d = getDistanceMeters(userLoc.latitude, userLoc.longitude, Number(s.latitude), Number(s.longitude));
-            if (d < minDist) minDist = d;
-          }
-          if (minDist <= MAP_CONFIG.NEARBY_THRESHOLD_M) {
-            onBanner('📍 近くにスポットがあります！');
-            setTimeout(() => onBanner(''), MAP_CONFIG.NEARBY_BANNER_DURATION_MS);
-          }
-        }
-      } else {
-        const bounds = getSpotsBounds(spotsRef.current);
-        if (bounds) {
-          map.on('load', () => {
-            map.fitBounds(bounds, {
-              padding: { top: 80, bottom: 120, left: 40, right: 40 },
-              maxZoom: 14,
-            });
-          });
-        }
-      }
-
-      mapRef.current = map;
-    },
-    [onBanner],
-  );
-
   const initMap = useCallback(() => {
     if (!mapContainer.current || !MAPBOX_TOKEN || mapRef.current) return;
 
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // Show map immediately with default center (no waiting for geolocation)
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: TOKYO_CENTER,
+      zoom: MAP_CONFIG.DEFAULT_ZOOM,
+      projection: 'mercator',
+    });
+
+    mapRef.current = map;
+
+    // Fit to spots bounds once map loads (if spots available)
+    map.on('load', () => {
+      const bounds = getSpotsBounds(spotsRef.current);
+      if (bounds) {
+        map.fitBounds(bounds, {
+          padding: { top: 80, bottom: 120, left: 40, right: 40 },
+          maxZoom: 14,
+        });
+      }
+    });
+
+    // Asynchronously try to get user location and adjust
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
         const inTokyo = isInTokyo(latitude, longitude);
-        const center: [number, number] = inTokyo ? [longitude, latitude] : TOKYO_CENTER;
-        const zoom = inTokyo ? MAP_CONFIG.NEARBY_ZOOM : MAP_CONFIG.DEFAULT_ZOOM;
 
-        if (!inTokyo) {
+        if (inTokyo) {
+          // Add user location marker
+          const el = document.createElement('div');
+          el.className = 'w-4 h-4 rounded-full bg-blue-500 border-2 border-white shadow animate-pulse';
+          new mapboxgl.Marker({ element: el }).setLngLat([longitude, latitude]).addTo(map);
+
+          // Fly to user location
+          map.flyTo({ center: [longitude, latitude], zoom: MAP_CONFIG.NEARBY_ZOOM });
+
+          // Check for nearby spots
+          const currentSpots = spotsRef.current;
+          if (currentSpots.length > 0) {
+            let minDist = Infinity;
+            for (const s of currentSpots) {
+              const d = getDistanceMeters(latitude, longitude, Number(s.latitude), Number(s.longitude));
+              if (d < minDist) minDist = d;
+            }
+            if (minDist <= MAP_CONFIG.NEARBY_THRESHOLD_M) {
+              onBanner('📍 近くにスポットがあります！');
+              setTimeout(() => onBanner(''), MAP_CONFIG.NEARBY_BANNER_DURATION_MS);
+            }
+          }
+        } else {
           onBanner('📍 東京のフォトスポットを表示しています');
           setTimeout(() => onBanner(''), MAP_CONFIG.INFO_BANNER_DURATION_MS);
         }
-
-        createMap(center, zoom, inTokyo ? { latitude, longitude } : null);
       },
       () => {
-        createMap(TOKYO_CENTER, MAP_CONFIG.DEFAULT_ZOOM, null);
+        // Geolocation failed — map is already showing, no action needed
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 },
     );
-  }, [createMap, onBanner]);
+  }, [onBanner]);
 
   useEffect(() => {
     if (viewMode === 'map') {
