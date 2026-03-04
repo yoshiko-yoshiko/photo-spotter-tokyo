@@ -5,6 +5,9 @@ export const TIMING = {
   SPLASH_NAVIGATE_MS: 1700,
   TOAST_DURATION_MS: 3000,
   POPUP_CLICK_DELAY_MS: 10,
+  DOUBLE_TAP_DELAY: 300,
+  LIKE_BURST_DURATION: 600,
+  LONG_PRESS_DELAY: 500,
 } as const;
 
 export const LIMITS = {
@@ -13,4 +16,9 @@ export const LIMITS = {
   CAPTION_MAX: 200,
   CAPTION_WARN_THRESHOLD: 180,
   BIO_MAX: 100,
+  MAX_COMMENT_LENGTH: 500,
+} as const;
+
+export const PAGINATION = {
+  PAGE_SIZE: 20,
 } as const;

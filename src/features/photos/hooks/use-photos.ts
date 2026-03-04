@@ -2,8 +2,9 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import type { ToggleLikeParams, ReportPhotoParams } from '@/features/photos/types';
+import { PAGINATION } from '@/lib/constants';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = PAGINATION.PAGE_SIZE;
 
 export function useSpotPhotos(spotId: string | undefined) {
   const { user } = useAuth();
