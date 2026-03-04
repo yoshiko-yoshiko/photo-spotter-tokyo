@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { MapPin, Camera, Grid3X3, User } from 'lucide-react';
+import { MapPin, Newspaper, Camera, Grid3X3, User } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 
 const tabs = [
   { path: '/map', icon: MapPin, label: '探す' },
+  { path: '/timeline', icon: Newspaper, label: 'タイムライン' },
   { path: '/camera', icon: Camera, label: '撮る', isFab: true },
   { path: '/collection', icon: Grid3X3, label: 'コレクション' },
   { path: '/profile', icon: User, label: 'マイページ' },
