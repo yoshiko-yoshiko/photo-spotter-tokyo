@@ -17,17 +17,13 @@ import DebugPage from "@/features/debug/pages/debug-page";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
 
-// TODO: Replace with actual imports when available
+// TODO: Replace with actual import when available
 const TimelinePage = lazy(() =>
   Promise.resolve({
     default: () => <div className="p-4">Timeline</div>,
   })
 );
-const SpotPhotosPage = lazy(() =>
-  Promise.resolve({
-    default: () => <div className="p-4">Spot Photos</div>,
-  })
-);
+const SpotPhotosPage = lazy(() => import('@/features/photos/pages/spot-photos-page'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
