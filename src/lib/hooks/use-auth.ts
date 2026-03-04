@@ -1,30 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useSyncExternalStore, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import type { Session, User } from '@supabase/supabase-js';
 
-export function useAuth() {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AuthState {
+  session: Session | null;
+  user: User | null;
+  loading: boolean;
+}
 
+let authState: AuthState = { session: null, user: null, loading: true };
+const listeners = new Set<() => void>();
+
+function subscribe(callback: () => void) {
+  listeners.add(callback);
+  return () => listeners.delete(callback);
+}
+
+function getSnapshot() {
+  return authState;
+}
+
+// Initialize auth listener (runs once on module load)
+supabase.auth.getSession().then(({ data: { session } }) => {
+  authState = { session, user: session?.user ?? null, loading: false };
+  listeners.forEach(l => l());
+});
+
+supabase.auth.onAuthStateChange((_event, session) => {
+  authState = { session, user: session?.user ?? null, loading: false };
+  listeners.forEach(l => l());
+});
+
+export function useAuth() {
+  const state = useSyncExternalStore(subscribe, getSnapshot);
+
+  const { session, user, loading } = state;
   const isGuest = session?.user?.is_anonymous === true;
   const isAuthenticated = !!session && !isGuest;
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
