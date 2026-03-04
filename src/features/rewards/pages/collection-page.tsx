@@ -187,15 +187,15 @@ export default function CollectionPage() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full ${
+                      <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+                        <span className={`inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
                           isBadge ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'
                         }`}>
-                          {isBadge ? <Trophy className="w-2.5 h-2.5" /> : <Ticket className="w-2.5 h-2.5" />}
+                          {isBadge ? <Trophy className="w-2.5 h-2.5 shrink-0" /> : <Ticket className="w-2.5 h-2.5 shrink-0" />}
                           {isBadge ? 'バッジ' : 'クーポン'}
                         </span>
                         {reward.description && (
-                          <p className="text-xs text-muted-foreground truncate">{reward.description}</p>
+                          <p className="text-xs text-muted-foreground truncate min-w-0">{reward.description}</p>
                         )}
                       </div>
                       <div className="mt-2">
