@@ -1,49 +1,32 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Heart, Camera } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { TIMING } from '@/lib/constants';
-import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
+import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
 import type { PhotoCardProps } from '@/features/photos/types';
 
 export function PhotoCard({ photo, onClick }: PhotoCardProps) {
-  const { user, isGuest, isAuthenticated } = useAuth();
-  const isLiked = usePhotoLikes(photo.id);
-  const toggleLike = useToggleLike();
+  const { user, isAuthenticated } = useAuth();
+  const {
+    localLiked,
+    localCount,
+    heartBurst,
+    isPending,
+    showAuthModal,
+    setShowAuthModal,
+    handleLike,
+  } = usePhotoLikeState({
+    photoId: photo.id,
+    initialLikesCount: photo.likes_count ?? 0,
+  });
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [heartBurst, setHeartBurst] = useState(false);
   const [imgError, setImgError] = useState(false);
   const lastTapRef = useRef(0);
   const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [localLiked, setLocalLiked] = useState(isLiked);
-  const [localCount, setLocalCount] = useState(photo.likes_count ?? 0);
-
-  useEffect(() => {
-    setLocalLiked(isLiked);
-  }, [isLiked]);
-
-  useEffect(() => {
-    setLocalCount(photo.likes_count ?? 0);
-  }, [photo.likes_count]);
-
   const isOwnPhoto = user?.id === photo.user_id;
-
-  const handleLike = () => {
-    if (isGuest || !isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-    if (!localLiked) {
-      setHeartBurst(true);
-      setTimeout(() => setHeartBurst(false), TIMING.LIKE_BURST_DURATION);
-    }
-    setLocalLiked(!localLiked);
-    setLocalCount(prev => localLiked ? prev - 1 : prev + 1);
-    toggleLike.mutate({ photoId: photo.id, isLiked: localLiked });
-  };
 
   const handleImageTap = () => {
     const now = Date.now();
@@ -51,14 +34,12 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
     lastTapRef.current = now;
 
     if (timeSinceLastTap < TIMING.DOUBLE_TAP_DELAY) {
-      // Double-tap: cancel pending single-tap, fire like
       if (singleTapTimerRef.current) {
         clearTimeout(singleTapTimerRef.current);
         singleTapTimerRef.current = null;
       }
       if (!localLiked) handleLike();
     } else {
-      // Potential single-tap: wait to see if double-tap follows
       singleTapTimerRef.current = setTimeout(() => {
         singleTapTimerRef.current = null;
         onClick?.();
@@ -97,7 +78,7 @@ export function PhotoCard({ photo, onClick }: PhotoCardProps) {
           <div className="flex items-center justify-between">
             <button
               onClick={handleLike}
-              disabled={toggleLike.isPending}
+              disabled={isPending}
               aria-label="いいね"
               className="flex items-center gap-1 text-xs transition-all active:scale-125"
             >
