@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState } from 'react';
-import { Heart, Camera, User } from 'lucide-react';
+import { Heart, Camera } from 'lucide-react';
+import { AvatarImage } from '@/components/ui/avatar-image';
 import { formatDistanceToNow } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,13 +35,7 @@ function TimelineCard({ post }: { post: TimelinePost }) {
       <div className="bg-card border border-border rounded-2xl overflow-hidden">
         {/* User info header */}
         <div className="flex items-center gap-3 px-4 py-3">
-          <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
-            {avatarUrl ? (
-              <img src={avatarUrl} alt={nickname} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-4 h-4 text-muted-foreground" />
-            )}
-          </div>
+          <AvatarImage src={avatarUrl} fallback={nickname} />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">{nickname}</p>
             {bio && <p className="text-xs text-muted-foreground truncate">{bio}</p>}

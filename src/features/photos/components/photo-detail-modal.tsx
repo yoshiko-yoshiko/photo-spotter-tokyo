@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Heart, Camera } from 'lucide-react';
+import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
-import { usePhotoLikes, useToggleLike } from '@/features/photos/hooks/use-photos';
+import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
 import { PhotoComments } from './photo-comments';
@@ -44,24 +45,23 @@ function formatRelativeDate(dateStr: string): string {
 }
 
 export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: PhotoDetailModalProps) {
-  const { user: currentUser, isGuest, isAuthenticated } = useAuth();
-  const isLiked = usePhotoLikes(isOpen ? photo.id : undefined);
-  const toggleLike = useToggleLike();
+  const { user: currentUser, isAuthenticated } = useAuth();
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [heartBurst, setHeartBurst] = useState(false);
+  const {
+    localLiked,
+    localCount,
+    heartBurst,
+    isPending,
+    showAuthModal,
+    setShowAuthModal,
+    handleLike,
+    handleDoubleTap,
+  } = usePhotoLikeState({
+    photoId: isOpen ? photo.id : undefined,
+    initialLikesCount: photo.likes_count ?? 0,
+  });
+
   const [imgError, setImgError] = useState(false);
-  const [localLiked, setLocalLiked] = useState(isLiked);
-  const [localCount, setLocalCount] = useState(photo.likes_count ?? 0);
-  const lastTapRef = useRef(0);
-
-  useEffect(() => {
-    setLocalLiked(isLiked);
-  }, [isLiked]);
-
-  useEffect(() => {
-    setLocalCount(photo.likes_count ?? 0);
-  }, [photo.likes_count]);
 
   // ESC key handler
   useEffect(() => {
@@ -82,28 +82,6 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
       document.body.style.overflow = original;
     };
   }, [isOpen]);
-
-  const handleLike = useCallback(() => {
-    if (isGuest || !isAuthenticated) {
-      setShowAuthModal(true);
-      return;
-    }
-    if (!localLiked) {
-      setHeartBurst(true);
-      setTimeout(() => setHeartBurst(false), 600);
-    }
-    setLocalLiked(!localLiked);
-    setLocalCount(prev => localLiked ? prev - 1 : prev + 1);
-    toggleLike.mutate({ photoId: photo.id, isLiked: localLiked });
-  }, [isGuest, isAuthenticated, localLiked, toggleLike, photo.id]);
-
-  const handleDoubleTap = useCallback(() => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      if (!localLiked) handleLike();
-    }
-    lastTapRef.current = now;
-  }, [localLiked, handleLike]);
 
   const isOwnPhoto = currentUser?.id === photo.user_id;
 
@@ -160,15 +138,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           {/* User info + actions */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2 min-w-0">
-              {photoUser?.avatar_url ? (
-                <img
-                  src={photoUser.avatar_url}
-                  alt={photoUser.nickname}
-                  className="w-8 h-8 rounded-full object-cover shrink-0"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-white/20 shrink-0" />
-              )}
+              <AvatarImage src={photoUser?.avatar_url} fallback={photoUser?.nickname || 'U'} className="w-8 h-8" />
               <div className="min-w-0">
                 <span className="text-white text-sm font-medium truncate block">
                   {photoUser?.nickname || 'ユーザー'}
@@ -198,7 +168,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           <div className="flex items-center justify-between">
             <button
               onClick={handleLike}
-              disabled={toggleLike.isPending}
+              disabled={isPending}
               aria-label="いいね"
               className="flex items-center gap-1.5 transition-all active:scale-125"
             >
