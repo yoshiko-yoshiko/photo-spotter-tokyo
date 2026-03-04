@@ -22,7 +22,7 @@ export function useSpotPhotos(spotId: string | undefined) {
 
       const { data, error } = await supabase
         .from('photos')
-        .select('*')
+        .select('*, users:user_id(nickname, avatar_url)')
         .eq('spot_id', spotId)
         .eq('is_public', true)
         .is('deleted_at', null)
