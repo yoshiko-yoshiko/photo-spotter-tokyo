@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Info, Edit2, FileText, Camera, MapPin, Award, Flame, Moon, Sun } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { AvatarImage } from '@/components/ui/avatar-image';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useTheme } from '@/lib/hooks/use-theme';
@@ -12,64 +13,39 @@ import { RewardDetailModal } from '@/features/rewards/components/reward-detail-m
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/lib/supabase/types';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
-import type { ProfileStats, UserProfile } from '../types';
 import { LIMITS } from '@/lib/constants';
+import { useUserProfile } from '../hooks/use-user-profile';
+import { useProfileStats } from '../hooks/use-profile-stats';
 
 export default function ProfilePage() {
   const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [stats, setStats] = useState<ProfileStats>({ stampCount: 0, photoCount: 0, spotCount: 0, rewardCount: 0 });
+  const queryClient = useQueryClient();
+
+  const { data: profile } = useUserProfile(user?.id);
+  const { data: stats, isLoading: loading } = useProfileStats(user?.id);
+
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState('');
   const [editingBio, setEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Tables<'rewards'> | null>(null);
-  const [totalSpots, setTotalSpots] = useState(10);
-  const [loading, setLoading] = useState(true);
 
   const { data: allRewards } = useRewards();
   const { data: userRewards } = useUserRewards();
   const { data: allSpots } = useSpots();
 
+  const totalSpots = allSpots?.length ?? 10;
+
+  // Sync edit form state when profile loads
   useEffect(() => {
-    if (!user) return;
-
-    supabase.from('users').select('nickname, avatar_url, bio').eq('id', user.id).maybeSingle()
-      .then(({ data }) => {
-        if (data) {
-          setProfile(data);
-          setNewName(data.nickname);
-          setNewBio(data.bio || '');
-        }
-      });
-
-    // Fetch all stats in parallel
-    Promise.all([
-      supabase.from('stamps').select('id, spot_id').eq('user_id', user.id),
-      supabase.from('photos').select('id', { count: 'exact', head: true }).eq('user_id', user.id).is('deleted_at', null),
-      supabase.from('user_rewards').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    ]).then(([stampsRes, photosRes, rewardsRes]) => {
-      const stamps = stampsRes.data || [];
-      const uniqueSpots = new Set(stamps.map(s => s.spot_id));
-      setStats({
-        stampCount: stamps.length,
-        photoCount: photosRes.count || 0,
-        spotCount: uniqueSpots.size,
-        rewardCount: rewardsRes.count || 0,
-      });
-      setLoading(false);
-    });
-  }, [user]);
-
-  // Use microCMS spot count as the source of truth
-  useEffect(() => {
-    if (allSpots && allSpots.length > 0) {
-      setTotalSpots(allSpots.length);
+    if (profile) {
+      setNewName(profile.nickname);
+      setNewBio(profile.bio || '');
     }
-  }, [allSpots]);
+  }, [profile]);
 
   const handleLogout = async () => {
     await signOut();
@@ -79,7 +55,7 @@ export default function ProfilePage() {
   const handleSaveName = async () => {
     if (!user || !newName.trim()) return;
     await supabase.from('users').update({ nickname: newName.trim() }).eq('id', user.id);
-    setProfile(prev => prev ? { ...prev, nickname: newName.trim() } : prev);
+    queryClient.invalidateQueries({ queryKey: ['user-profile', user.id] });
     setEditingName(false);
   };
 
@@ -87,7 +63,7 @@ export default function ProfilePage() {
     if (!user) return;
     const bio = newBio.trim() || null;
     await supabase.from('users').update({ bio }).eq('id', user.id);
-    setProfile(prev => prev ? { ...prev, bio } : prev);
+    queryClient.invalidateQueries({ queryKey: ['user-profile', user.id] });
     setEditingBio(false);
   };
 
@@ -96,11 +72,13 @@ export default function ProfilePage() {
 
   const unlockedRewardIds = new Set((userRewards || []).map(ur => ur.reward_id));
 
+  const currentStats = stats ?? { stampCount: 0, photoCount: 0, spotCount: 0, rewardCount: 0 };
+
   const statItems = [
-    { icon: Flame, label: 'スタンプ', value: stats.stampCount, color: 'text-primary' },
-    { icon: Camera, label: '写真', value: stats.photoCount, color: 'text-accent' },
-    { icon: MapPin, label: 'スポット', value: stats.spotCount, color: 'text-primary-light' },
-    { icon: Award, label: 'リワード', value: stats.rewardCount, color: 'text-stamp-gold' },
+    { icon: Flame, label: 'スタンプ', value: currentStats.stampCount, color: 'text-primary' },
+    { icon: Camera, label: '写真', value: currentStats.photoCount, color: 'text-accent' },
+    { icon: MapPin, label: 'スポット', value: currentStats.spotCount, color: 'text-primary-light' },
+    { icon: Award, label: 'リワード', value: currentStats.rewardCount, color: 'text-stamp-gold' },
   ];
 
   return (
@@ -165,12 +143,12 @@ export default function ProfilePage() {
       {/* Stamp progress */}
       <div className="mx-4 mt-4 p-4 rounded-2xl bg-card border border-border">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-lg font-bold text-foreground">{stats.stampCount} / {totalSpots} スタンプ</span>
+          <span className="text-lg font-bold text-foreground">{currentStats.stampCount} / {totalSpots} スタンプ</span>
         </div>
         <div className="bg-muted rounded-full h-3 overflow-hidden">
           <div
             className="bg-primary rounded-full h-3 transition-all duration-500"
-            style={{ width: `${totalSpots > 0 ? Math.min((stats.stampCount / totalSpots) * 100, 100) : 0}%` }}
+            style={{ width: `${totalSpots > 0 ? Math.min((currentStats.stampCount / totalSpots) * 100, 100) : 0}%` }}
           />
         </div>
         <button
@@ -311,7 +289,7 @@ export default function ProfilePage() {
         onClose={() => setSelectedReward(null)}
         reward={selectedReward}
         isUnlocked={selectedReward ? unlockedRewardIds.has(selectedReward.id) : false}
-        stampCount={stats.stampCount}
+        stampCount={currentStats.stampCount}
         usedAt={(userRewards || []).find(ur => ur.reward_id === selectedReward?.id)?.used_at}
       />
     </div>
