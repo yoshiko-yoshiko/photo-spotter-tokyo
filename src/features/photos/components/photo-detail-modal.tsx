@@ -213,7 +213,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           </div>
 
           {/* Comments section */}
-          <div className="mt-3 -mx-4 border-t border-white/10 bg-card rounded-t-xl">
+          <div className="mt-3 -mx-4 -mb-3 border-t border-white/10 bg-card rounded-t-xl pb-[env(safe-area-inset-bottom)]">
             <PhotoComments photoId={photo.id} />
           </div>
         </div>
