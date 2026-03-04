@@ -68,17 +68,17 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
         </div>
 
         {/* Photo */}
-        <div className="relative aspect-[4/3] bg-muted" onClick={handleImageTap}>
+        <div className="relative bg-muted" onClick={handleImageTap}>
           {!imgError ? (
             <img
               src={post.image_url}
               alt={post.caption || 'Photo'}
-              className="w-full h-full object-cover"
+              className="w-full max-h-[500px] object-contain bg-muted"
               loading="lazy"
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-muted">
+            <div className="w-full aspect-[4/3] flex items-center justify-center bg-muted">
               <Camera className="w-8 h-8 text-muted-foreground/30" />
             </div>
           )}
