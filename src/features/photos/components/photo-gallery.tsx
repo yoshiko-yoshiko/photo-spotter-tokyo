@@ -1,11 +1,14 @@
+import { useState } from 'react';
 import { useSpotPhotos } from '@/features/photos/hooks/use-photos';
 import { PhotoCard } from '@/features/photos/components/photo-card';
+import { PhotoDetailModal } from '@/features/photos/components/photo-detail-modal';
 import { Camera } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import type { PhotoGalleryProps } from '@/features/photos/types';
+import type { PhotoGalleryProps, PhotoWithUser } from '@/features/photos/types';
 
 export function PhotoGallery({ spotId, slug }: PhotoGalleryProps) {
   const { data: photos = [], isLoading } = useSpotPhotos(spotId);
+  const [selectedPhoto, setSelectedPhoto] = useState<PhotoWithUser | null>(null);
 
   if (isLoading) {
     return (
@@ -46,9 +49,22 @@ export function PhotoGallery({ spotId, slug }: PhotoGalleryProps) {
       ) : (
         <div className="grid grid-cols-2 gap-2 px-4">
           {photos.map(photo => (
-            <PhotoCard key={photo.id} photo={photo} />
+            <PhotoCard
+              key={photo.id}
+              photo={photo as PhotoWithUser}
+              onClick={() => setSelectedPhoto(photo as PhotoWithUser)}
+            />
           ))}
         </div>
+      )}
+
+      {selectedPhoto && (
+        <PhotoDetailModal
+          photo={selectedPhoto}
+          user={selectedPhoto.users}
+          isOpen
+          onClose={() => setSelectedPhoto(null)}
+        />
       )}
     </div>
   );

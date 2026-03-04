@@ -12,4 +12,5 @@ export const LIMITS = {
   NICKNAME_INPUT_MAX: 20,
   CAPTION_MAX: 200,
   CAPTION_WARN_THRESHOLD: 180,
+  BIO_MAX: 100,
 } as const;

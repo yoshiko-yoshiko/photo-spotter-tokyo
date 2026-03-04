@@ -6,7 +6,7 @@ import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
 import type { PhotoCardProps } from '@/features/photos/types';
 
-export function PhotoCard({ photo }: PhotoCardProps) {
+export function PhotoCard({ photo, onClick }: PhotoCardProps) {
   const { user, isGuest, isAuthenticated } = useAuth();
   const isLiked = usePhotoLikes(photo.id);
   const toggleLike = useToggleLike();
@@ -15,6 +15,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const [heartBurst, setHeartBurst] = useState(false);
   const [imgError, setImgError] = useState(false);
   const lastTapRef = useRef(0);
+  const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [localLiked, setLocalLiked] = useState(isLiked);
   const [localCount, setLocalCount] = useState(photo.likes_count ?? 0);
@@ -43,18 +44,31 @@ export function PhotoCard({ photo }: PhotoCardProps) {
     toggleLike.mutate({ photoId: photo.id, isLiked: localLiked });
   };
 
-  const handleDoubleTap = () => {
+  const handleImageTap = () => {
     const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      if (!localLiked) handleLike();
-    }
+    const timeSinceLastTap = now - lastTapRef.current;
     lastTapRef.current = now;
+
+    if (timeSinceLastTap < 300) {
+      // Double-tap: cancel pending single-tap, fire like
+      if (singleTapTimerRef.current) {
+        clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      if (!localLiked) handleLike();
+    } else {
+      // Potential single-tap: wait to see if double-tap follows
+      singleTapTimerRef.current = setTimeout(() => {
+        singleTapTimerRef.current = null;
+        onClick?.();
+      }, 300);
+    }
   };
 
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border bg-card">
-        <div className="relative aspect-[4/3] bg-muted" onClick={handleDoubleTap}>
+        <div className="relative aspect-[4/3] bg-muted" onClick={handleImageTap}>
           {!imgError ? (
             <img
               src={photo.image_url}
