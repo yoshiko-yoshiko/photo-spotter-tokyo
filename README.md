@@ -1,3 +1,5 @@
+![CI](https://github.com/nakashima-kanei24-fixer/photo-spotter-tokyo/actions/workflows/ci.yml/badge.svg)
+
 # Welcome to your Lovable project
 
 ## Project info
