@@ -41,7 +41,8 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
       setShowReport(false);
       setReportReason('');
       setReportDetail('');
-    } catch {
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Report error:', err);
       toast.error('通報に失敗しました');
     }
   };
@@ -53,7 +54,8 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
       toast.success('ユーザーをブロックしました');
       setShowBlockConfirm(false);
       setShowMenu(false);
-    } catch {
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Block error:', err);
       toast.error('ブロックに失敗しました');
     }
   };
@@ -62,6 +64,7 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
     <>
       <div className="relative">
         <button
+          type="button"
           onClick={() => setShowMenu(!showMenu)}
           aria-label="メニュー"
           className="p-1 text-muted-foreground rounded-full hover:bg-muted"
@@ -74,12 +77,14 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
             <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
             <div className="absolute right-0 bottom-8 z-50 bg-card rounded-xl shadow-lg border border-border py-1 min-w-[140px]">
               <button
+                type="button"
                 onClick={() => { setShowReport(true); setShowMenu(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-muted"
               >
                 <Flag className="w-4 h-4 text-muted-foreground" /> 通報する
               </button>
               <button
+                type="button"
                 onClick={() => { setShowBlockConfirm(true); setShowMenu(false); }}
                 className="w-full flex items-center gap-2 px-3 py-2 text-sm text-destructive hover:bg-muted"
               >
@@ -96,13 +101,14 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
           <div className="bg-card rounded-2xl shadow-xl p-5 w-full max-w-sm animate-slide-up">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-foreground">📢 通報する</h3>
-              <button onClick={() => setShowReport(false)} className="text-muted-foreground">
+              <button type="button" onClick={() => setShowReport(false)} aria-label="閉じる" className="text-muted-foreground">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-2">
               {REPORT_REASONS.map(reason => (
                 <button
+                  type="button"
                   key={reason}
                   onClick={() => setReportReason(reason)}
                   className={`w-full text-left rounded-lg px-3 py-2.5 text-sm border transition-colors ${
@@ -125,10 +131,11 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
               />
             )}
             <div className="flex gap-3 mt-4">
-              <button onClick={() => setShowReport(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium text-sm">
+              <button type="button" onClick={() => setShowReport(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium text-sm">
                 キャンセル
               </button>
               <button
+                type="button"
                 onClick={handleReport}
                 disabled={!reportReason || reportPhoto.isPending}
                 className="flex-1 rounded-full bg-destructive text-destructive-foreground py-2 font-medium text-sm disabled:opacity-50"
@@ -149,10 +156,11 @@ export function PhotoActionsMenu({ photoId, photoUserId }: PhotoActionsMenuProps
               このユーザーの写真が表示されなくなります。この操作は取り消せません。
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setShowBlockConfirm(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium text-sm">
+              <button type="button" onClick={() => setShowBlockConfirm(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium text-sm">
                 キャンセル
               </button>
               <button
+                type="button"
                 onClick={handleBlock}
                 disabled={blockUser.isPending}
                 className="flex-1 rounded-full bg-destructive text-destructive-foreground py-2 font-medium text-sm disabled:opacity-50"

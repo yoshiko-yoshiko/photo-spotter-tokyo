@@ -8,6 +8,8 @@ import { useDeletePhoto } from '@/features/photos/hooks/use-photos';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { PhotoActionsMenu } from './photo-actions-menu';
 import { PhotoComments } from './photo-comments';
+import { DeletePhotoDialog } from './delete-photo-dialog';
+import { formatRelativeDate } from '@/lib/utils/format-date';
 
 interface PhotoDetailModalProps {
   photo: {
@@ -25,25 +27,6 @@ interface PhotoDetailModalProps {
   } | null;
   isOpen: boolean;
   onClose: () => void;
-}
-
-function formatRelativeDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMinutes < 1) return 'たった今';
-  if (diffMinutes < 60) return `${diffMinutes}分前`;
-  if (diffHours < 24) return `${diffHours}時間前`;
-  if (diffDays < 30) return `${diffDays}日前`;
-
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}/${m}/${d}`;
 }
 
 export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: PhotoDetailModalProps) {
@@ -80,7 +63,6 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
     setShowDeleteConfirm(false);
   };
 
-  // ESC key handler
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,7 +72,6 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Body scroll lock
   useEffect(() => {
     if (!isOpen) return;
     const original = document.body.style.overflow;
@@ -110,8 +91,8 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
         className="fixed inset-0 z-[100] bg-black flex flex-col animate-fade-in"
         onClick={onClose}
       >
-        {/* Close button */}
         <button
+          type="button"
           onClick={onClose}
           aria-label="閉じる"
           className="absolute top-4 right-4 z-10 p-2 text-white/80 hover:text-white transition-colors"
@@ -119,7 +100,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           <X className="w-6 h-6" />
         </button>
 
-        {/* Photo — fixed height, never shrinks */}
+        {/* Photo */}
         <div
           className="relative h-[45vh] shrink-0 flex items-center justify-center bg-black"
           onClick={(e) => {
@@ -146,12 +127,11 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
           )}
         </div>
 
-        {/* Info + Comments — scrollable bottom section */}
+        {/* Info + Comments */}
         <div
           className="flex-1 min-h-0 overflow-y-auto bg-card"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* User info + actions */}
           <div className="flex items-center justify-between px-4 pt-3 pb-2">
             <div className="flex items-center gap-2 min-w-0">
               <AvatarImage src={photoUser?.avatar_url} fallback={photoUser?.nickname || 'U'} className="w-8 h-8" />
@@ -169,6 +149,7 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
             <div className="flex items-center gap-2 shrink-0">
               {isAuthenticated && isOwnPhoto && (
                 <button
+                  type="button"
                   onClick={() => setShowDeleteConfirm(true)}
                   aria-label="写真を削除"
                   className="p-2 rounded-full hover:bg-muted transition-colors"
@@ -182,16 +163,15 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
             </div>
           </div>
 
-          {/* Caption */}
           {photo.caption && (
             <p className="text-foreground text-sm whitespace-pre-line px-4 pb-2">
               {photo.caption}
             </p>
           )}
 
-          {/* Like + date */}
           <div className="flex items-center justify-between px-4 pb-2">
             <button
+              type="button"
               onClick={handleLike}
               disabled={isPending}
               aria-label="いいね"
@@ -211,7 +191,6 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
             </span>
           </div>
 
-          {/* Comments section */}
           <div className="border-t border-border pb-[env(safe-area-inset-bottom)]">
             <PhotoComments photoId={photo.id} />
           </div>
@@ -220,40 +199,12 @@ export function PhotoDetailModal({ photo, user: photoUser, isOpen, onClose }: Ph
 
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
 
-      {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
-        <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div
-            className="bg-card rounded-2xl shadow-xl p-5 w-full max-w-xs animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-2 mb-3">
-              <Trash2 className="w-5 h-5 text-destructive" />
-              <h3 className="font-semibold text-foreground">写真を削除</h3>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-              この写真を削除しますか？この操作は取り消せません。
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-full border border-border py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={handleDeletePhoto}
-                disabled={deletePhoto.isPending}
-                className="flex-1 rounded-full bg-destructive py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
-              >
-                {deletePhoto.isPending ? '削除中...' : '削除する'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <DeletePhotoDialog
+          isPending={deletePhoto.isPending}
+          onConfirm={handleDeletePhoto}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
       )}
     </>
   );

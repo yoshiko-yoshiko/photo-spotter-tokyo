@@ -27,7 +27,7 @@ export function AvatarImage({ src, fallback, className = 'w-9 h-9', iconSize = '
       {!showFallback ? (
         <img
           src={src!}
-          alt=""
+          alt={fallback ? `${fallback}のアバター` : ""}
           className="w-full h-full object-cover"
           referrerPolicy="no-referrer"
           onError={() => setError(true)}

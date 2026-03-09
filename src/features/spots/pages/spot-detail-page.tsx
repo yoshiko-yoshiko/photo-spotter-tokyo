@@ -63,7 +63,7 @@ export default function SpotDetailPage() {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 text-center">
         <p className="text-muted-foreground">スポットが見つかりません</p>
-        <button onClick={() => navigate('/map')} className="text-primary text-sm mt-3">地図に戻る</button>
+        <button type="button" onClick={() => navigate('/map')} className="text-primary text-sm mt-3">地図に戻る</button>
       </div>
     );
   }
@@ -109,7 +109,7 @@ export default function SpotDetailPage() {
           )}
         </div>
 
-        <button onClick={() => fromNotifications ? navigate('/profile', { replace: true }) : navigate(-1)}
+        <button type="button" onClick={() => fromNotifications ? navigate('/profile', { replace: true }) : navigate(-1)}
           aria-label="戻る"
           className="absolute top-4 left-4 bg-card/80 backdrop-blur rounded-full w-10 h-10 shadow-sm flex items-center justify-center">
           <ChevronLeft className="w-5 h-5 text-foreground" />
@@ -121,7 +121,7 @@ export default function SpotDetailPage() {
           </span>
         )}
 
-        <button onClick={handleShare}
+        <button type="button" onClick={handleShare}
           aria-label="共有"
           className="absolute top-4 right-4 bg-card/80 backdrop-blur rounded-full w-10 h-10 shadow-sm flex items-center justify-center">
           <Share2 className="w-5 h-5 text-foreground" />
@@ -195,6 +195,7 @@ export default function SpotDetailPage() {
               <Check className="w-4 h-4" /> スタンプ取得済み
             </div>
             <button
+              type="button"
               onClick={() => navigate(`/camera?spot=${supabaseSpotId}`)}
               className="w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
@@ -203,6 +204,7 @@ export default function SpotDetailPage() {
           </>
         ) : (
           <button
+            type="button"
             onClick={handleCheckin}
             disabled={isCheckinLoading}
             className={`w-full rounded-full py-4 text-lg font-bold shadow-lg transition-colors flex items-center justify-center gap-2 ${

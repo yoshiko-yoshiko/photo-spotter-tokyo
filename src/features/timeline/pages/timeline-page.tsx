@@ -68,7 +68,7 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
         </div>
 
         {/* Photo */}
-        <div className="relative bg-muted" onClick={handleImageTap}>
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { onPhotoClick(); } }} className="relative bg-muted" onClick={handleImageTap}>
           {!imgError ? (
             <img
               src={post.image_url}
@@ -93,6 +93,7 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
         <div className="px-4 py-3 space-y-2">
           <div className="flex items-center gap-4">
             <button
+              type="button"
               onClick={handleLike}
               disabled={isPending}
               aria-label="いいね"
@@ -108,6 +109,7 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
               </span>
             </button>
             <button
+              type="button"
               onClick={onPhotoClick}
               aria-label="コメント"
               className="flex items-center gap-1.5 text-sm text-muted-foreground transition-all active:scale-110"

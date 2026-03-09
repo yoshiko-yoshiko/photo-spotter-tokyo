@@ -79,7 +79,7 @@ export default function SpotPhotosPage() {
     return (
       <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-background px-4 text-center">
         <p className="text-muted-foreground">写真の読み込みに失敗しました</p>
-        <button onClick={() => navigate(-1)} className="text-primary text-sm mt-3">
+        <button type="button" onClick={() => navigate(-1)} className="text-primary text-sm mt-3">
           戻る
         </button>
       </div>
@@ -91,6 +91,7 @@ export default function SpotPhotosPage() {
       {/* Header */}
       <div className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border px-4 py-3 flex items-center gap-3">
         <button
+          type="button"
           onClick={() => navigate(-1)}
           aria-label="戻る"
           className="shrink-0 w-10 h-10 rounded-full bg-card border border-border flex items-center justify-center"

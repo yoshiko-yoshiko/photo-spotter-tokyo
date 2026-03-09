@@ -11,13 +11,15 @@ import { RewardDetailModal } from '@/features/rewards/components/reward-detail-m
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Tables } from '@/lib/supabase/types';
 import { NotificationBell } from '@/features/notifications/components/notification-bell';
-import { LIMITS } from '@/lib/constants';
 import { useUserProfile } from '../hooks/use-user-profile';
 import { useProfileStats } from '../hooks/use-profile-stats';
 import { useUpdateNickname, useUpdateBio } from '../hooks/use-update-profile';
+import { EditNameModal } from '../components/edit-name-modal';
+import { EditBioModal } from '../components/edit-bio-modal';
+import { ProfileBadges } from '../components/profile-badges';
 
 export default function ProfilePage() {
-  const { user, isGuest, isAuthenticated, signOut, linkGoogle } = useAuth();
+  const { user, isGuest, isAuthenticated, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const updateNickname = useUpdateNickname();
@@ -37,9 +39,8 @@ export default function ProfilePage() {
   const { data: userRewards } = useUserRewards();
   const { data: allSpots } = useSpots();
 
-  const totalSpots = allSpots?.length ?? 10;
+  const totalSpots = allSpots?.length ?? 0;
 
-  // Sync edit form state when profile loads
   useEffect(() => {
     if (profile) {
       setNewName(profile.nickname);
@@ -105,6 +106,7 @@ export default function ProfilePage() {
         <div className="mx-4 mt-4 p-4 rounded-2xl bg-primary/5 border border-primary/20 text-center">
           <p className="text-sm text-foreground font-medium mb-3">ログインしてスタンプを集めよう！</p>
           <button
+            type="button"
             onClick={() => setShowAuthModal(true)}
             className="rounded-full bg-primary text-primary-foreground px-6 py-2 text-sm font-medium"
           >
@@ -148,6 +150,7 @@ export default function ProfilePage() {
           />
         </div>
         <button
+          type="button"
           onClick={() => navigate('/collection')}
           className="text-primary text-sm mt-2 inline-block"
         >
@@ -156,68 +159,30 @@ export default function ProfilePage() {
       </div>
 
       {/* Badges section */}
-      {allRewards && allRewards.length > 0 && (
-        <div className="mx-4 mt-4">
-          <h3 className="text-base font-bold text-foreground mb-3">🏆 獲得バッジ</h3>
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-3">
-            {allRewards.map(reward => {
-              const isUnlocked = unlockedRewardIds.has(reward.id);
-              return (
-                <button
-                  key={reward.id}
-                  onClick={() => setSelectedReward(reward)}
-                  className={`rounded-2xl border p-3 text-center transition-all ${
-                    isUnlocked
-                      ? 'bg-card border-stamp-gold/40 shadow-sm'
-                      : 'bg-muted/50 border-border opacity-50'
-                  }`}
-                >
-                  <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center overflow-hidden ${
-                    isUnlocked ? 'ring-2 ring-stamp-gold/50' : 'grayscale'
-                  }`}>
-                    {reward.badge_image_url ? (
-                      <img
-                        src={reward.badge_image_url}
-                        alt={reward.name}
-                        className={`w-full h-full object-cover ${!isUnlocked ? 'grayscale' : ''}`}
-                      />
-                    ) : (
-                      <Award className={`w-7 h-7 ${isUnlocked ? 'text-stamp-gold' : 'text-muted-foreground'}`} />
-                    )}
-                  </div>
-                  <p className="text-xs font-medium text-foreground mt-2 line-clamp-1">{reward.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {isUnlocked ? '獲得済み ✓' : `${reward.required_count}スタンプ`}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
+      {allRewards && (
+        <ProfileBadges
+          rewards={allRewards}
+          unlockedRewardIds={unlockedRewardIds}
+          onSelectReward={setSelectedReward}
+        />
       )}
 
       {/* Settings */}
       {isAuthenticated && (
         <div className="mx-4 mt-4 rounded-2xl bg-card border border-border divide-y divide-border">
-          <button
-            onClick={() => setEditingName(true)}
-            className="w-full flex items-center gap-3 p-4 text-left"
-          >
+          <button type="button" onClick={() => setEditingName(true)} className="w-full flex items-center gap-3 p-4 text-left">
             <Edit2 className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">表示名の変更</span>
           </button>
-          <button
-            onClick={() => setEditingBio(true)}
-            className="w-full flex items-center gap-3 p-4 text-left"
-          >
+          <button type="button" onClick={() => setEditingBio(true)} className="w-full flex items-center gap-3 p-4 text-left">
             <FileText className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">自己紹介の編集</span>
           </button>
-          <button onClick={toggleTheme} className="w-full flex items-center gap-3 p-4 text-left">
+          <button type="button" onClick={toggleTheme} className="w-full flex items-center gap-3 p-4 text-left">
             {theme === 'dark' ? <Sun className="w-5 h-5 text-muted-foreground" /> : <Moon className="w-5 h-5 text-muted-foreground" />}
             <span className="text-foreground">{theme === 'dark' ? 'ライトモード' : 'ダークモード'}</span>
           </button>
-          <button onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-left">
+          <button type="button" onClick={handleLogout} className="w-full flex items-center gap-3 p-4 text-left">
             <LogOut className="w-5 h-5 text-muted-foreground" />
             <span className="text-foreground">ログアウト</span>
           </button>
@@ -228,54 +193,22 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Edit name modal */}
+      {/* Edit modals */}
       {editingName && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/50 backdrop-blur-sm px-4">
-          <div className="bg-card rounded-2xl shadow-xl p-6 w-full max-w-sm animate-slide-up">
-            <h3 className="text-lg font-bold text-foreground mb-4">表示名の変更</h3>
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              maxLength={LIMITS.NICKNAME_DISPLAY_MAX}
-              className="w-full rounded-lg border border-border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none"
-            />
-            <p className="text-xs text-muted-foreground text-right mt-1">{newName.length}/{LIMITS.NICKNAME_DISPLAY_MAX}</p>
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setEditingName(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium">
-                キャンセル
-              </button>
-              <button onClick={handleSaveName} className="flex-1 rounded-full bg-primary text-primary-foreground py-2 font-medium">
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditNameModal
+          name={newName}
+          onNameChange={setNewName}
+          onSave={handleSaveName}
+          onCancel={() => setEditingName(false)}
+        />
       )}
-
-      {/* Edit bio modal */}
       {editingBio && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-foreground/50 backdrop-blur-sm px-4">
-          <div className="bg-card rounded-2xl shadow-xl p-6 w-full max-w-sm animate-slide-up">
-            <h3 className="text-lg font-bold text-foreground mb-4">自己紹介の編集</h3>
-            <textarea
-              value={newBio}
-              onChange={(e) => setNewBio(e.target.value)}
-              maxLength={LIMITS.BIO_MAX}
-              rows={3}
-              placeholder="自己紹介を入力..."
-              className="w-full rounded-lg border border-border px-3 py-2 focus:ring-2 focus:ring-primary focus:outline-none resize-none"
-            />
-            <p className="text-xs text-muted-foreground text-right mt-1">{newBio.length}/{LIMITS.BIO_MAX}</p>
-            <div className="flex gap-3 mt-4">
-              <button onClick={() => setEditingBio(false)} className="flex-1 rounded-full border-2 border-primary text-primary py-2 font-medium">
-                キャンセル
-              </button>
-              <button onClick={handleSaveBio} className="flex-1 rounded-full bg-primary text-primary-foreground py-2 font-medium">
-                保存
-              </button>
-            </div>
-          </div>
-        </div>
+        <EditBioModal
+          bio={newBio}
+          onBioChange={setNewBio}
+          onSave={handleSaveBio}
+          onCancel={() => setEditingBio(false)}
+        />
       )}
 
       <AuthPromptModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />

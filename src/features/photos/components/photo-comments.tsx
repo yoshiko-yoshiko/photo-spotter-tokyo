@@ -170,6 +170,7 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
             className="flex-1 min-w-0 bg-muted rounded-full px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-primary/30"
           />
           <button
+            type="button"
             onClick={handleSubmit}
             disabled={!canSubmit}
             aria-label="送信"
@@ -203,12 +204,14 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
             </p>
             <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => setDeleteTargetId(null)}
                 className="flex-1 rounded-full border border-border py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted"
               >
                 いいえ
               </button>
               <button
+                type="button"
                 onClick={() => handleDelete(deleteTargetId)}
                 disabled={deleteComment.isPending}
                 className="flex-1 rounded-full bg-destructive py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"

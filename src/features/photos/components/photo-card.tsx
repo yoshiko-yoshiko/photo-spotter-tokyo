@@ -50,7 +50,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onClick }: PhotoCardPr
   return (
     <>
       <div className="rounded-xl overflow-hidden border border-border bg-card">
-        <div className="relative aspect-square bg-muted" onClick={handleImageTap}>
+        <div role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter') { onClick?.(); } }} className="relative aspect-square bg-muted" onClick={handleImageTap}>
           {!imgError ? (
             <img
               src={photo.image_url}
@@ -77,6 +77,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onClick }: PhotoCardPr
           )}
           <div className="flex items-center justify-between">
             <button
+              type="button"
               onClick={handleLike}
               disabled={isPending}
               aria-label="いいね"

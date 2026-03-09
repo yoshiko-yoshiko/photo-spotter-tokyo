@@ -11,6 +11,7 @@ import { PhotoPreview } from '@/features/camera/components/photo-preview';
 import { AuthPromptModal } from '@/features/auth/components/auth-prompt-modal';
 import { ConfettiCanvas } from '@/features/rewards/components/confetti-canvas';
 import { RewardUnlockOverlay } from '@/features/rewards/components/reward-unlock-overlay';
+import { toast } from 'sonner';
 import type { Step } from '@/features/camera/types';
 
 export default function CameraPage() {
@@ -66,7 +67,9 @@ export default function CameraPage() {
       const supabaseId = idMap?.byMicrocmsId[selectedSpotId] ?? selectedSpotId;
       await uploadPhoto(file, supabaseId, caption);
       setStep('done');
-    } catch {
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Upload error:', err);
+      toast.error('写真のアップロードに失敗しました');
       setStep('select-spot');
     }
   };
@@ -110,7 +113,7 @@ export default function CameraPage() {
           {step === 'done' && '🎉 投稿完了'}
         </h1>
         {step !== 'select-photo' && step !== 'uploading' && step !== 'done' && (
-          <button onClick={resetFlow} aria-label="リセット" className="text-muted-foreground">
+          <button type="button" onClick={resetFlow} aria-label="リセット" className="text-muted-foreground">
             <X className="w-5 h-5" />
           </button>
         )}
@@ -128,6 +131,7 @@ export default function CameraPage() {
             className="hidden"
           />
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             className="w-full max-w-sm aspect-[4/3] rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 flex flex-col items-center justify-center gap-3 active:scale-[0.98] transition-transform"
           >
@@ -139,6 +143,7 @@ export default function CameraPage() {
           </button>
 
           <button
+            type="button"
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
@@ -179,6 +184,7 @@ export default function CameraPage() {
           <div className="space-y-2 max-h-[40vh] overflow-y-auto pb-24">
             {filteredSpots.map(spot => (
               <button
+                type="button"
                 key={spot.id}
                 onClick={() => setSelectedSpotId(spot.id)}
                 className={`w-full text-left rounded-xl p-3 border transition-colors ${
@@ -196,6 +202,7 @@ export default function CameraPage() {
           {/* Upload button */}
           <div className="fixed bottom-20 left-4 right-4 z-40 md:max-w-2xl md:mx-auto">
             <button
+              type="button"
               onClick={handleUpload}
               disabled={!selectedSpotId || !file}
               className={`w-full rounded-full py-4 text-lg font-bold shadow-lg flex items-center justify-center gap-2 transition-colors ${
@@ -231,12 +238,14 @@ export default function CameraPage() {
           </p>
           <div className="flex gap-3 mt-8 w-full max-w-xs">
             <button
+              type="button"
               onClick={resetFlow}
               className="flex-1 rounded-full border-2 border-primary text-primary py-2.5 font-medium"
             >
               もう1枚投稿
             </button>
             <button
+              type="button"
               onClick={() => navigate('/collection')}
               className="flex-1 rounded-full bg-primary text-primary-foreground py-2.5 font-medium"
             >

@@ -7,9 +7,16 @@ export const SpotCard = memo(function SpotCard({ spot, isVisited, onClick, varia
   const color = CATEGORY_COLORS[spot.category] || '#0D9488';
   const [imgError, setImgError] = useState(false);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+  };
+
   if (variant === 'compact') {
     return (
-      <div onClick={onClick} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer active:scale-[0.98] transition-transform flex">
+      <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKeyDown} aria-label={spot.name} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer active:scale-[0.98] transition-transform flex">
         <div className="relative w-24 h-24 shrink-0">
           {!imgError && spot.image_url ? (
             <img
@@ -44,7 +51,7 @@ export const SpotCard = memo(function SpotCard({ spot, isVisited, onClick, varia
   }
 
   return (
-    <div onClick={onClick} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
+    <div role="button" tabIndex={0} onClick={onClick} onKeyDown={handleKeyDown} aria-label={spot.name} className="bg-card rounded-xl shadow-sm border border-border overflow-hidden cursor-pointer active:scale-[0.98] transition-transform">
       <div className="relative">
         {!imgError && spot.image_url ? (
           <img

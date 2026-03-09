@@ -37,6 +37,7 @@ export function BottomNav() {
             if (tab.isFab) {
               return (
                 <button
+                  type="button"
                   key={tab.path}
                   onClick={() => handleTab(tab.path, true)}
                   aria-label={tab.label}
@@ -52,6 +53,7 @@ export function BottomNav() {
 
             return (
               <button
+                type="button"
                 key={tab.path}
                 onClick={() => handleTab(tab.path)}
                 aria-label={tab.label}

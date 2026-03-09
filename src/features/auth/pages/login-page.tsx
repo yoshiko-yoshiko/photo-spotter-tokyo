@@ -19,7 +19,8 @@ export default function LoginPage() {
       await signInAsGuest();
       const onboardingDone = localStorage.getItem('photo_spotter_onboarding_done') === 'true';
       navigate(onboardingDone ? '/map' : '/onboarding', { replace: true });
-    } catch {
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error('Guest login error:', err);
       toast.error('ゲストログインに失敗しました。もう一度お試しください。');
     }
   };
@@ -41,6 +42,7 @@ export default function LoginPage() {
 
         {/* Google login */}
         <button
+          type="button"
           onClick={signInWithGoogle}
           className="w-full rounded-xl bg-card text-foreground border border-border py-3.5 font-medium flex items-center justify-center gap-3 shadow-sm transition-all active:scale-[0.98]"
         >
@@ -55,6 +57,7 @@ export default function LoginPage() {
 
         {/* Guest login */}
         <button
+          type="button"
           onClick={handleGuest}
           className="w-full mt-3 rounded-xl bg-muted text-muted-foreground py-3.5 font-medium transition-all active:scale-[0.98]"
         >
