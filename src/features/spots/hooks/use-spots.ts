@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { cmsClient } from '@/lib/microcms/client';
 import { supabase } from '@/lib/supabase/client';
 import type { CMSSpot } from '@/lib/microcms/types';
@@ -6,6 +7,31 @@ import { cmsSpotToSpot } from '@/lib/microcms/utils';
 import { isCoordsMissing } from '@/features/map/lib/geocode';
 
 export function useSpots() {
+  const queryClient = useQueryClient();
+
+  // Realtime subscription: spots テーブルの変更を監視
+  useEffect(() => {
+    const channel = supabase
+      .channel('spots-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'spots',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['spots'] });
+          queryClient.invalidateQueries({ queryKey: ['spot-id-map'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ['spots'],
     queryFn: async () => {
@@ -39,7 +65,7 @@ export function useSpots() {
 
       return spots;
     },
-    staleTime: 1000 * 60 * 1,
+    staleTime: 1000 * 30,
   });
 }
 
