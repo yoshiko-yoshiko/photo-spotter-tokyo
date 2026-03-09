@@ -41,14 +41,14 @@ export default function MapPage() {
   const [infoBanner, setInfoBanner] = useState('');
 
   const onBanner = useCallback((msg: string) => setInfoBanner(msg), []);
-  const { mapContainer, mapRef, markersRef, handleLocate } = useMapInit({ viewMode, spots, onBanner });
+  const { mapContainer, mapRef, markersRef, handleLocate, mapReady } = useMapInit({ viewMode, spots, onBanner });
 
   const filteredSpots = useSpotFilter({ spots, searchQuery, selectedCategory, selectedArea });
 
   // Update markers when spots/filters change
   useEffect(() => {
+    if (!mapReady || !mapRef.current || viewMode !== 'map' || !idMap) return;
     const map = mapRef.current;
-    if (!map || viewMode !== 'map') return;
 
     markersRef.current.forEach(m => m.remove());
     markersRef.current = [];
@@ -94,7 +94,7 @@ export default function MapPage() {
 
       markersRef.current.push(marker);
     });
-  }, [filteredSpots, stampedSpotIds, idMap, viewMode, navigate, mapRef, markersRef]);
+  }, [filteredSpots, stampedSpotIds, idMap, viewMode, navigate, mapReady]);
 
   if (!MAPBOX_TOKEN) {
     return (

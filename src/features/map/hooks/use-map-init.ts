@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect } from 'react';
+import { useRef, useCallback, useEffect, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import {
@@ -25,6 +25,7 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const spotsRef = useRef(spots);
   spotsRef.current = spots;
+  const [mapReady, setMapReady] = useState(false);
 
   const initMap = useCallback(() => {
     if (!mapContainer.current || !MAPBOX_TOKEN || mapRef.current) return;
@@ -44,6 +45,7 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
 
     // Fit to spots bounds once map loads (if spots available)
     map.on('load', () => {
+      setMapReady(true);
       const bounds = getSpotsBounds(spotsRef.current);
       if (bounds) {
         map.fitBounds(bounds, {
@@ -102,6 +104,7 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
       markersRef.current = [];
       mapRef.current?.remove();
       mapRef.current = null;
+      setMapReady(false);
     }
   }, [viewMode, initMap]);
 
@@ -109,6 +112,7 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
     return () => {
       mapRef.current?.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
   }, []);
 
@@ -121,5 +125,5 @@ export function useMapInit({ viewMode, spots, onBanner }: UseMapInitOptions) {
     );
   }, []);
 
-  return { mapContainer, mapRef, markersRef, handleLocate };
+  return { mapContainer, mapRef, markersRef, handleLocate, mapReady };
 }
