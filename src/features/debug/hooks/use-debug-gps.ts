@@ -4,10 +4,12 @@ import type { DebugPosition } from '@/features/debug/types';
 const DEBUG_MODE_KEY = 'photo_spotter_debug_gps';
 const DEBUG_POSITION_KEY = 'debug_gps_position';
 
+/** Check debug mode from URL param, env var, or session (evaluated once at init) */
+const isEnvDebug = import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true';
+
 function getStoredDebugMode(): boolean {
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('debug') === 'gps') return true;
-  if (import.meta.env.VITE_ENABLE_DEBUG_MODE === 'true') return true;
+  if (isEnvDebug) return true;
+  if (window.location.search.includes('debug=gps')) return true;
   return sessionStorage.getItem(DEBUG_MODE_KEY) === 'true';
 }
 
@@ -15,8 +17,8 @@ function getStoredPosition(): DebugPosition | null {
   try {
     const stored = sessionStorage.getItem(DEBUG_POSITION_KEY);
     if (stored) return JSON.parse(stored);
-  } catch {
-    // ignore
+  } catch (err: unknown) {
+    if (import.meta.env.DEV) console.debug('Debug GPS parse error:', err);
   }
   return null;
 }

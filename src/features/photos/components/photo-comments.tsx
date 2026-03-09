@@ -1,8 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Send, Loader2, Trash2 } from 'lucide-react';
 import { AvatarImage } from '@/components/ui/avatar-image';
-import { formatDistanceToNow } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { formatRelativeDate } from '@/lib/utils/format-date';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { LIMITS, TIMING } from '@/lib/constants';
@@ -138,10 +137,7 @@ export function PhotoComments({ photoId }: PhotoCommentsProps) {
                         {comment.users?.nickname ?? '不明なユーザー'}
                       </span>
                       <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                        {formatDistanceToNow(new Date(comment.created_at), {
-                          addSuffix: true,
-                          locale: ja,
-                        })}
+                        {formatRelativeDate(comment.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-foreground break-words">{comment.body}</p>

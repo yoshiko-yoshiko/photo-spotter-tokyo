@@ -60,10 +60,14 @@ export default function MapPage() {
 
       const el = createMarkerElement(spot.name, color, isVisited);
 
+      const imageHtml = spot.image_url
+        ? `<img src="${escapeHtml(spot.image_url)}" alt="${escapeHtml(spot.name)}" class="w-full aspect-video object-cover rounded-t-lg" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><div style="display:none" class="w-full aspect-video bg-slate-100 items-center justify-center rounded-t-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>`
+        : `<div class="w-full aspect-video bg-slate-100 flex items-center justify-center rounded-t-lg"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-300"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></div>`;
+
       const popup = new mapboxgl.Popup({ offset: 25, maxWidth: '220px', closeButton: true })
         .setHTML(`
           <div class="cursor-pointer" id="popup-${escapeHtml(spot.id)}">
-            <img src="${escapeHtml(spot.image_url || '')}" alt="${escapeHtml(spot.name)}" class="w-full aspect-video object-cover rounded-t-lg" onerror="this.style.display='none'" />
+            ${imageHtml}
             <div class="p-2">
               <p class="text-sm font-bold text-slate-800 truncate">${escapeHtml(spot.name)}</p>
               <div class="flex items-center gap-1 mt-1">

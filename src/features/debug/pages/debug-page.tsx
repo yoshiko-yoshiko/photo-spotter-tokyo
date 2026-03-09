@@ -6,6 +6,14 @@ export default function DebugPage() {
   const { data: spots = [] } = useSpots();
   const { isDebugMode, setDebugMode, debugPosition, setPosition } = useDebugGps();
 
+  if (!import.meta.env.DEV) {
+    return (
+      <div className="min-h-dvh bg-background flex items-center justify-center p-4">
+        <p className="text-muted-foreground">ページが見つかりません</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-dvh bg-background p-4">
       <div className="max-w-2xl mx-auto space-y-6">

@@ -93,8 +93,9 @@ export function useAddComment() {
             body: preview,
           });
         }
-      } catch {
+      } catch (err: unknown) {
         // Notification failure should not block comment submission
+        if (import.meta.env.DEV) console.debug('Notification send error:', err);
       }
     },
     onSuccess: (_, { photoId }) => {

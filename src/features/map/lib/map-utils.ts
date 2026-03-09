@@ -36,14 +36,18 @@ export function getSpotsBounds(
 ): [[number, number], [number, number]] | null {
   if (spots.length === 0) return null;
   let minLng = Infinity, minLat = Infinity, maxLng = -Infinity, maxLat = -Infinity;
+  let validCount = 0;
   for (const s of spots) {
     const lng = Number(s.longitude);
     const lat = Number(s.latitude);
+    if (isNaN(lng) || isNaN(lat)) continue;
     if (lng < minLng) minLng = lng;
     if (lng > maxLng) maxLng = lng;
     if (lat < minLat) minLat = lat;
     if (lat > maxLat) maxLat = lat;
+    validCount++;
   }
+  if (validCount === 0) return null;
   return [[minLng, minLat], [maxLng, maxLat]];
 }
 

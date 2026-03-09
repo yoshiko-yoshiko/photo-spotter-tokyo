@@ -1,8 +1,7 @@
 import { useRef, useCallback, useState } from 'react';
 import { Heart, Camera, MessageCircle } from 'lucide-react';
 import { AvatarImage } from '@/components/ui/avatar-image';
-import { formatDistanceToNow } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { formatRelativeDate } from '@/lib/utils/format-date';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TIMING } from '@/lib/constants';
 import { usePhotoLikeState } from '@/features/photos/hooks/use-photo-like';
@@ -63,7 +62,7 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
             {bio && <p className="text-xs text-muted-foreground truncate">{bio}</p>}
           </div>
           <p className="text-[10px] text-muted-foreground flex-shrink-0">
-            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: ja })}
+            {formatRelativeDate(post.created_at)}
           </p>
         </div>
 

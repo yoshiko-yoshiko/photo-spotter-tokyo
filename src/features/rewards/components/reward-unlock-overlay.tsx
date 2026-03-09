@@ -53,7 +53,7 @@ export function RewardUnlockOverlay({ rewards, open, onClose }: RewardUnlockOver
               >
                 <div className="w-12 h-12 rounded-xl bg-stamp-gold/20 flex items-center justify-center shrink-0">
                   {isBadge && reward.badge_image_url ? (
-                    <img src={reward.badge_image_url} alt="" className="w-8 h-8 object-contain" />
+                    <img src={reward.badge_image_url} alt={`${reward.name}のバッジ`} className="w-8 h-8 object-contain" />
                   ) : isBadge ? (
                     <Trophy className="w-6 h-6 text-stamp-gold" />
                   ) : (

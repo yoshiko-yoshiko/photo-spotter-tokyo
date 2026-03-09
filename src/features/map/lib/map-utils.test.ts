@@ -153,22 +153,20 @@ describe('getSpotsBounds', () => {
   });
 
   // --- QA追加: 異常系 ---
-  it('BUG: returns Infinity/-Infinity for non-numeric string coordinates instead of null or NaN', () => {
-    // BUG FOUND: When coordinates are non-numeric strings like "abc",
-    // Number("abc") = NaN. NaN comparisons (NaN < Infinity) are always false,
-    // so the initial values (Infinity/-Infinity) are never updated.
-    // The function returns [[Infinity, Infinity], [-Infinity, -Infinity]]
-    // instead of null or NaN bounds.
-    // This could cause downstream mapbox errors if the return value is used as-is.
+  it('returns null for non-numeric string coordinates', () => {
     const spots = [{ latitude: 'abc', longitude: 'xyz' }];
     const result = getSpotsBounds(spots);
-    expect(result).not.toBeNull();
-    const [[minLng, minLat], [maxLng, maxLat]] = result!;
-    // Actual behavior: returns initial sentinel values
-    expect(minLng).toBe(Infinity);
-    expect(minLat).toBe(Infinity);
-    expect(maxLng).toBe(-Infinity);
-    expect(maxLat).toBe(-Infinity);
+    expect(result).toBeNull();
+  });
+
+  it('skips NaN coordinates and returns bounds for valid ones only', () => {
+    const spots = [
+      { latitude: 'abc', longitude: 'xyz' },
+      { latitude: 35.68, longitude: 139.77 },
+      { latitude: 'invalid', longitude: '139.8' },
+    ];
+    const result = getSpotsBounds(spots);
+    expect(result).toEqual([[139.77, 35.68], [139.77, 35.68]]);
   });
 
   it('handles negative coordinates', () => {

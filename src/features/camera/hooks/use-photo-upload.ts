@@ -5,6 +5,71 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRewardUnlock } from '@/features/rewards/hooks/use-reward-unlock';
 import { toast } from 'sonner';
 
+/** Upload file to Supabase Storage and return the public URL + storage path */
+async function uploadToStorage(file: File, userId: string) {
+  const ext = file.name.split('.').pop() || 'jpg';
+  const path = `${userId}/${Date.now()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from('photos')
+    .upload(path, file, { contentType: file.type });
+
+  if (error) throw error;
+
+  const { data: { publicUrl } } = supabase.storage
+    .from('photos')
+    .getPublicUrl(path);
+
+  return { publicUrl, path };
+}
+
+/** Insert photo record and return the created photo */
+async function insertPhotoRecord(userId: string, spotId: string, publicUrl: string, storagePath: string, caption: string) {
+  const { data, error } = await supabase
+    .from('photos')
+    .insert({
+      user_id: userId,
+      spot_id: spotId,
+      image_url: publicUrl,
+      storage_path: storagePath,
+      caption: caption.trim() || null,
+      is_public: true,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+/** Create stamp, silently ignore duplicates */
+async function createStamp(userId: string, spotId: string, photoId: string) {
+  const { error } = await supabase
+    .from('stamps')
+    .insert({
+      user_id: userId,
+      spot_id: spotId,
+      photo_id: photoId,
+      method: 'photo',
+    });
+
+  if (error) {
+    const msg = 'message' in error && typeof error.message === 'string' ? error.message : '';
+    if (!msg.includes('duplicate')) throw error;
+  }
+}
+
+/** Fetch current reward IDs for comparison after stamp creation */
+async function fetchCurrentRewardIds(userId: string): Promise<string[]> {
+  const { data } = await supabase
+    .from('user_rewards')
+    .select('reward_id')
+    .eq('user_id', userId);
+  return (data || []).map(r => r.reward_id);
+}
+
+const INVALIDATE_KEYS = [['stamps'], ['photos'], ['timeline'], ['spot-photos']] as const;
+
 export function usePhotoUpload() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -22,70 +87,25 @@ export function usePhotoUpload() {
     setError(null);
 
     try {
-      // Capture current reward IDs before stamp creation
-      const { data: prevRewards } = await supabase
-        .from('user_rewards')
-        .select('reward_id')
-        .eq('user_id', user.id);
-      const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
+      const prevRewardIds = await fetchCurrentRewardIds(user.id);
 
-      // Upload to Storage
-      const ext = file.name.split('.').pop() || 'jpg';
-      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { publicUrl, path } = await uploadToStorage(file, user.id);
+      const photo = await insertPhotoRecord(user.id, spotId, publicUrl, path, caption);
+      await createStamp(user.id, spotId, photo.id);
 
-      const { error: uploadError } = await supabase.storage
-        .from('photos')
-        .upload(path, file, { contentType: file.type });
+      for (const key of INVALIDATE_KEYS) {
+        queryClient.invalidateQueries({ queryKey: [...key] });
+      }
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('photos')
-        .getPublicUrl(path);
-
-      // Insert photo record
-      const { data: photo, error: photoError } = await supabase
-        .from('photos')
-        .insert({
-          user_id: user.id,
-          spot_id: spotId,
-          image_url: publicUrl,
-          storage_path: path,
-          caption: caption.trim() || null,
-          is_public: true,
-        })
-        .select()
-        .single();
-
-      if (photoError) throw photoError;
-
-      // Create stamp
-      const { error: stampError } = await supabase
-        .from('stamps')
-        .insert({
-          user_id: user.id,
-          spot_id: spotId,
-          photo_id: photo.id,
-          method: 'photo',
-        });
-
-      if (stampError && !stampError.message.includes('duplicate')) throw stampError;
-
-      // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ['stamps'] });
-      queryClient.invalidateQueries({ queryKey: ['photos'] });
-      queryClient.invalidateQueries({ queryKey: ['timeline'] });
-      queryClient.invalidateQueries({ queryKey: ['spot-photos'] });
-
-      // Check for newly unlocked rewards
       checkNewRewards(prevRewardIds);
-
       toast.success('写真を投稿しました！スタンプを獲得 🎉');
     } catch (err: unknown) {
       const msg = 'アップロードに失敗しました';
+      const detail = err instanceof Error ? err.message : String(err);
+      if (import.meta.env.DEV) console.error('Photo upload error:', err);
       setError(msg);
       toast.error(msg);
-      throw err;
+      throw new Error(`${msg}: ${detail}`);
     } finally {
       setIsUploading(false);
     }

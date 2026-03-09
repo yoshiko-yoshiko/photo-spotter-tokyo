@@ -77,8 +77,9 @@ export function useSpotIdSync(spots: Spot[]) {
             image_url: spot.image_url,
             is_active: true,
           });
-        if (error && !error.message.includes('duplicate')) {
-          console.error('Spot sync failed:', spot.slug, error.message);
+        const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
+        if (error && !errMsg.includes('duplicate')) {
+          if (import.meta.env.DEV) console.error('Spot sync failed:', spot.slug, errMsg);
         } else if (!error) {
           changed = true;
         }
@@ -111,7 +112,8 @@ export function useSpotIdSync(spots: Spot[]) {
           .eq('id', supabaseId);
 
         if (error) {
-          console.error('Geocode update failed:', spot.slug, error.message);
+          const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
+          if (import.meta.env.DEV) console.error('Geocode update failed:', spot.slug, errMsg);
         } else {
           updated = true;
         }

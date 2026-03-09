@@ -31,6 +31,25 @@ supabase.auth.onAuthStateChange((_event, session) => {
   listeners.forEach(l => l());
 });
 
+const AUTH_REDIRECT_KEY = 'auth_redirect_path';
+const DEFAULT_REDIRECT_PATH = '/map';
+
+function saveRedirectPath() {
+  const current = window.location.pathname;
+  if (current && current !== '/') {
+    sessionStorage.setItem(AUTH_REDIRECT_KEY, current);
+  }
+}
+
+export function consumeRedirectPath(): string {
+  const saved = sessionStorage.getItem(AUTH_REDIRECT_KEY);
+  if (saved) {
+    sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+    return saved;
+  }
+  return DEFAULT_REDIRECT_PATH;
+}
+
 export function useAuth() {
   const state = useSyncExternalStore(subscribe, getSnapshot);
 
@@ -39,10 +58,11 @@ export function useAuth() {
   const isAuthenticated = !!session && !isGuest;
 
   const signInWithGoogle = useCallback(async () => {
+    saveRedirectPath();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/map',
+        redirectTo: window.location.origin + DEFAULT_REDIRECT_PATH,
       },
     });
     if (error) throw error;
@@ -54,10 +74,11 @@ export function useAuth() {
   }, []);
 
   const linkGoogle = useCallback(async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    saveRedirectPath();
+    const { error } = await supabase.auth.linkIdentity({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/map',
+        redirectTo: window.location.origin + DEFAULT_REDIRECT_PATH,
       },
     });
     if (error) throw error;

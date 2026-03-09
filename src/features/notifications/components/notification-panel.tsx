@@ -1,7 +1,6 @@
 import { Heart, X, Info, Star, Gift, CheckCheck, ChevronDown, MessageCircle, Bell } from 'lucide-react';
 import type { NotificationIconConfig } from '@/features/notifications/types';
-import { formatDistanceToNow } from 'date-fns';
-import { ja } from 'date-fns/locale';
+import { formatRelativeDate } from '@/lib/utils/format-date';
 
 interface Notification {
   id: string;
@@ -97,7 +96,7 @@ export function NotificationPanel({
                     <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">📷 {n.body}</p>
                   )}
                   <p className="text-[10px] text-muted-foreground mt-1">
-                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true, locale: ja })}
+                    {formatRelativeDate(n.created_at)}
                   </p>
                 </div>
                 <button

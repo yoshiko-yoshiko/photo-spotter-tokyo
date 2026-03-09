@@ -1,12 +1,19 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import type { NewReward } from '@/features/rewards/types';
 
+const REWARD_CHECK_INTERVAL_MS = 500;
+const MAX_REWARD_CHECK_RETRIES = 3;
+
+function wait(ms: number) {
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * After a stamp is created, check if new rewards were unlocked.
- * Returns a function to trigger the check and state for newly unlocked rewards.
+ * Uses retry logic to wait for the DB trigger to fire.
  */
 export function useRewardUnlock() {
   const { user } = useAuth();
@@ -14,34 +21,39 @@ export function useRewardUnlock() {
   const [newRewards, setNewRewards] = useState<NewReward[]>([]);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  const fetchUserRewards = useCallback(async (userId: string) => {
+    const { data } = await supabase
+      .from('user_rewards')
+      .select('reward_id, reward:rewards(id, name, type, badge_image_url, description)')
+      .eq('user_id', userId);
+    return data;
+  }, []);
+
   const checkNewRewards = useCallback(async (previousRewardIds: string[]) => {
     if (!user) return;
 
-    // Wait a moment for the trigger to fire
-    await new Promise(r => setTimeout(r, 800));
+    for (let attempt = 1; attempt <= MAX_REWARD_CHECK_RETRIES; attempt++) {
+      await wait(REWARD_CHECK_INTERVAL_MS);
 
-    // Fetch current user_rewards
-    const { data: currentUserRewards } = await supabase
-      .from('user_rewards')
-      .select('reward_id, reward:rewards(id, name, type, badge_image_url, description)')
-      .eq('user_id', user.id);
+      const currentUserRewards = await fetchUserRewards(user.id);
+      if (!currentUserRewards) continue;
 
-    if (!currentUserRewards) return;
+      const newlyUnlocked = currentUserRewards.filter(
+        ur => !previousRewardIds.includes(ur.reward_id)
+      );
 
-    const newlyUnlocked = currentUserRewards.filter(
-      ur => !previousRewardIds.includes(ur.reward_id)
-    );
+      if (newlyUnlocked.length > 0) {
+        const rewards = newlyUnlocked
+          .map(ur => ur.reward as unknown as NewReward)
+          .filter(Boolean);
 
-    if (newlyUnlocked.length > 0) {
-      const rewards = newlyUnlocked
-        .map(ur => ur.reward as unknown as NewReward)
-        .filter(Boolean);
-
-      setNewRewards(rewards);
-      setShowCelebration(true);
-      queryClient.invalidateQueries({ queryKey: ['user_rewards'] });
+        setNewRewards(rewards);
+        setShowCelebration(true);
+        queryClient.invalidateQueries({ queryKey: ['user_rewards'] });
+        return;
+      }
     }
-  }, [user, queryClient]);
+  }, [user, queryClient, fetchUserRewards]);
 
   const dismissCelebration = useCallback(() => {
     setShowCelebration(false);

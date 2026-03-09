@@ -27,7 +27,8 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
 
     const [longitude, latitude] = feature.center;
     return { latitude, longitude };
-  } catch {
+  } catch (err: unknown) {
+    if (import.meta.env.DEV) console.error('Geocoding error:', err);
     return null;
   }
 }

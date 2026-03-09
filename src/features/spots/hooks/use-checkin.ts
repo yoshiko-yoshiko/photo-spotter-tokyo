@@ -16,7 +16,8 @@ function getGeoPosition(options: PositionOptions): Promise<GeolocationPosition> 
 async function getPositionWithFallback(): Promise<GeolocationPosition> {
   try {
     return await getGeoPosition({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
-  } catch {
+  } catch (err: unknown) {
+    if (import.meta.env.DEV) console.debug('High accuracy geolocation failed, falling back:', err);
     return await getGeoPosition({ enableHighAccuracy: false, timeout: 5000, maximumAge: 60000 });
   }
 }
@@ -72,7 +73,7 @@ export function useCheckin() {
         });
 
       if (stampError) {
-        if (stampError.message.includes('duplicate')) {
+        if ('message' in stampError && typeof stampError.message === 'string' && stampError.message.includes('duplicate')) {
           toast.info('すでにチェックイン済みです');
         } else {
           throw stampError;
@@ -83,12 +84,14 @@ export function useCheckin() {
         checkNewRewards(prevRewardIds);
       }
     } catch (err: unknown) {
-      const geoErr = err as GeolocationPositionError | undefined;
       let msg: string;
-      if (geoErr?.code === 1) {
-        msg = '位置情報の許可が必要です。設定から有効にしてください。';
-      } else if (geoErr?.code === 2 || geoErr?.code === 3) {
-        msg = '位置情報を取得できませんでした。電波の良い場所で再度お試しください。';
+      if (typeof err === 'object' && err !== null && 'code' in err) {
+        const code = (err as { code: number }).code;
+        if (code === 1) {
+          msg = '位置情報の許可が必要です。設定から有効にしてください。';
+        } else {
+          msg = '位置情報を取得できませんでした。電波の良い場所で再度お試しください。';
+        }
       } else {
         msg = 'チェックインに失敗しました';
       }
