@@ -17,4 +17,21 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'mapbox-gl': ['mapbox-gl'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-supabase': ['@supabase/supabase-js'],
+          'vendor-ui': ['sonner', 'class-variance-authority', 'clsx', 'tailwind-merge'],
+          'vendor-radix': [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-toast',
+          ],
+        },
+      },
+    },
+  },
 }));

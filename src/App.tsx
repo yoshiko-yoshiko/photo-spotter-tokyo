@@ -8,6 +8,7 @@ import SplashPage from "@/features/auth/pages/splash-page";
 import LoginPage from "@/features/auth/pages/login-page";
 import OnboardingPage from "@/features/auth/pages/onboarding-page";
 import NotFound from "@/features/app/pages/not-found";
+import LandingPage from "@/features/app/pages/landing-page";
 import DebugPage from "@/features/debug/pages/debug-page";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -39,7 +40,8 @@ const App = () => (
     <BrowserRouter>
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<SplashPage />} />
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/splash" element={<SplashPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route element={<AppLayout />}>
@@ -49,9 +51,9 @@ const App = () => (
             <Route path="/spots/:slug/photos" element={<Suspense fallback={null}><SpotPhotosPage /></Suspense>} />
             <Route path="/camera" element={<ProtectedRoute><Suspense fallback={null}><CameraPage /></Suspense></ProtectedRoute>} />
             <Route path="/collection" element={<ProtectedRoute><Suspense fallback={null}><CollectionPage /></Suspense></ProtectedRoute>} />
-            <Route path="/profile" element={<Suspense fallback={null}><ProfilePage /></Suspense>} />
+            <Route path="/profile" element={<ProtectedRoute><Suspense fallback={null}><ProfilePage /></Suspense></ProtectedRoute>} />
           </Route>
-          <Route path="/debug" element={<DebugPage />} />
+          {import.meta.env.DEV && <Route path="/debug" element={<DebugPage />} />}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </ErrorBoundary>
