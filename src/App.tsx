@@ -8,7 +8,6 @@ import SplashPage from "@/features/auth/pages/splash-page";
 import LoginPage from "@/features/auth/pages/login-page";
 import OnboardingPage from "@/features/auth/pages/onboarding-page";
 import NotFound from "@/features/app/pages/not-found";
-import LandingPage from "@/features/app/pages/landing-page";
 import DebugPage from "@/features/debug/pages/debug-page";
 import { ProtectedRoute } from "@/features/auth/components/protected-route";
 import { ErrorBoundary } from "@/components/error-boundary";
@@ -40,7 +39,7 @@ const App = () => (
     <BrowserRouter>
       <ErrorBoundary>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<LoginPage />} />
           <Route path="/splash" element={<SplashPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
