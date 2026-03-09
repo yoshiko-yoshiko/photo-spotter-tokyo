@@ -31,7 +31,8 @@ export async function validateImage(file: File): Promise<boolean> {
       toast.error('画像サイズが大きすぎます（最大4096x4096px）');
       return false;
     }
-  } catch {
+  } catch (err: unknown) {
+    if (import.meta.env.DEV) console.error('Image validation error:', err);
     toast.error('この画像ファイルは読み込めません。別の写真を選択してください。');
     return false;
   }
