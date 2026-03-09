@@ -15,17 +15,21 @@ export function useSpotIdMap() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('spots')
-        .select('id, microcms_id, slug');
+        .select('id, microcms_id, slug, category, name');
       if (error) throw error;
       const byMicrocmsId: Record<string, string> = {};
       const bySlug: Record<string, string> = {};
+      const metaByMicrocmsId: Record<string, { category: string; name: string }> = {};
       for (const row of data || []) {
-        if (row.microcms_id) byMicrocmsId[row.microcms_id] = row.id;
+        if (row.microcms_id) {
+          byMicrocmsId[row.microcms_id] = row.id;
+          metaByMicrocmsId[row.microcms_id] = { category: row.category, name: row.name };
+        }
         if (row.slug) bySlug[row.slug] = row.id;
       }
-      return { byMicrocmsId, bySlug };
+      return { byMicrocmsId, bySlug, metaByMicrocmsId };
     },
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -124,9 +128,53 @@ export function useSpotIdSync(spots: Spot[]) {
       }
     };
 
+    // 既存スポットのメタデータ（category, name等）が microCMS と Supabase で乖離していれば同期
+    const syncExistingMetadata = async () => {
+      const meta = idMap.metaByMicrocmsId;
+      if (!meta) return;
+
+      const stale = spots.filter(spot => {
+        const supabaseId = idMap.byMicrocmsId[spot.id];
+        if (!supabaseId) return false;
+        const dbMeta = meta[spot.id];
+        if (!dbMeta) return false;
+        return dbMeta.category !== spot.category || dbMeta.name !== spot.name;
+      });
+
+      if (stale.length === 0) return;
+
+      let updated = false;
+      for (const spot of stale) {
+        const supabaseId = idMap.byMicrocmsId[spot.id];
+        const { error } = await supabase
+          .from('spots')
+          .update({
+            name: spot.name,
+            category: spot.category,
+            area: spot.area,
+            description: spot.description,
+            photo_tip: spot.photo_tip,
+            best_time: spot.best_time,
+            image_url: spot.image_url,
+          })
+          .eq('id', supabaseId);
+
+        if (error) {
+          const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
+          if (import.meta.env.DEV) console.error('Spot metadata sync failed:', spot.slug, errMsg);
+        } else {
+          updated = true;
+        }
+      }
+      if (updated) {
+        await queryClient.refetchQueries({ queryKey: ['spot-id-map'] });
+      }
+    };
+
     if (missing.length > 0) {
       syncMissing();
     }
     geocodeMissing();
+    syncExistingMetadata();
   }, [isAuthenticated, idMap, spots, queryClient]);
 }
