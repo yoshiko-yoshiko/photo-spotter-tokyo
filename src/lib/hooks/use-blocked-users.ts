@@ -8,10 +8,11 @@ export function useBlockedUsers() {
     queryKey: ['blocked-users', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('user_blocks')
         .select('blocked_id')
         .eq('blocker_id', user.id);
+      if (error) throw error;
       return (data || []).map(b => b.blocked_id);
     },
     enabled: !!user,

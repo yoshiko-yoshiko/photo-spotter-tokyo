@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { Tables } from '@/lib/supabase/helpers';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRewardUnlock } from '@/features/rewards/hooks/use-reward-unlock';
@@ -11,13 +12,13 @@ async function uploadToStorage(file: File, userId: string) {
   const path = `${userId}/${Date.now()}.${ext}`;
 
   const { error } = await supabase.storage
-    .from('photos')
+    .from(Tables.PHOTOS)
     .upload(path, file, { contentType: file.type });
 
   if (error) throw error;
 
   const { data: { publicUrl } } = supabase.storage
-    .from('photos')
+    .from(Tables.PHOTOS)
     .getPublicUrl(path);
 
   return { publicUrl, path };
@@ -26,7 +27,7 @@ async function uploadToStorage(file: File, userId: string) {
 /** Insert photo record and return the created photo */
 async function insertPhotoRecord(userId: string, spotId: string, publicUrl: string, storagePath: string, caption: string) {
   const { data, error } = await supabase
-    .from('photos')
+    .from(Tables.PHOTOS)
     .insert({
       user_id: userId,
       spot_id: spotId,
@@ -45,7 +46,7 @@ async function insertPhotoRecord(userId: string, spotId: string, publicUrl: stri
 /** Create stamp, silently ignore duplicates */
 async function createStamp(userId: string, spotId: string, photoId: string) {
   const { error } = await supabase
-    .from('stamps')
+    .from(Tables.STAMPS)
     .insert({
       user_id: userId,
       spot_id: spotId,
@@ -61,10 +62,11 @@ async function createStamp(userId: string, spotId: string, photoId: string) {
 
 /** Fetch current reward IDs for comparison after stamp creation */
 async function fetchCurrentRewardIds(userId: string): Promise<string[]> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('user_rewards')
     .select('reward_id')
     .eq('user_id', userId);
+  if (error) throw error;
   return (data || []).map(r => r.reward_id);
 }
 

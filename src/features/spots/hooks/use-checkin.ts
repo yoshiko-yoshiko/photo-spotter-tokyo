@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { Tables } from '@/lib/supabase/helpers';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useQueryClient } from '@tanstack/react-query';
 import { useRewardUnlock } from '@/features/rewards/hooks/use-reward-unlock';
@@ -41,10 +42,11 @@ export function useCheckin() {
 
     try {
       // Capture current reward IDs before stamp creation
-      const { data: prevRewards } = await supabase
+      const { data: prevRewards, error: rewardErr } = await supabase
         .from('user_rewards')
         .select('reward_id')
         .eq('user_id', user.id);
+      if (rewardErr) throw rewardErr;
       const prevRewardIds = (prevRewards || []).map(r => r.reward_id);
 
       // Get current position (debug mode uses mock, otherwise 2-stage fallback)
@@ -65,7 +67,7 @@ export function useCheckin() {
 
       // Insert stamp (debug mode uses 'manual' method)
       const { error: stampError } = await supabase
-        .from('stamps')
+        .from(Tables.STAMPS)
         .insert({
           user_id: user.id,
           spot_id: spotId,
