@@ -5,28 +5,65 @@ import { useAuth } from '@/lib/hooks/use-auth';
 import { geocodeAddress, isCoordsMissing } from '@/features/map/lib/geocode';
 import type { Spot } from '@/lib/microcms/types';
 
+interface SpotMeta {
+  category: string;
+  name: string;
+}
+
+interface SpotIdMapData {
+  byMicrocmsId: Record<string, string>;
+  bySlug: Record<string, string>;
+  metaByMicrocmsId: Record<string, SpotMeta>;
+}
+
+const SPOT_METADATA_FIELDS = [
+  'name', 'category', 'area', 'description',
+  'photo_tip', 'best_time', 'image_url',
+] as const;
+
+type SpotMetadataPayload = Pick<Spot, (typeof SPOT_METADATA_FIELDS)[number]>;
+
+function buildMetadataPayload(spot: Spot): SpotMetadataPayload {
+  return Object.fromEntries(
+    SPOT_METADATA_FIELDS.map(k => [k, spot[k]])
+  ) as SpotMetadataPayload;
+}
+
+function logSyncError(context: string, slug: string, error: unknown) {
+  if (!import.meta.env.DEV) return;
+  const msg = typeof error === 'object' && error !== null && 'message' in error
+    ? String((error as { message: string }).message)
+    : String(error);
+  console.error(`[spot-sync] ${context}:`, slug, msg);
+}
+
 /**
- * microCMS id → Supabase UUID のマッピングを提供
- * stamps/photos 等のDB操作で Supabase UUID が必要なため
+ * microCMS id → Supabase UUID のマッピング + メタデータ差分検知用データ
  */
 export function useSpotIdMap() {
-  return useQuery({
+  return useQuery<SpotIdMapData>({
     queryKey: ['spot-id-map'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('spots')
         .select('id, microcms_id, slug, category, name');
       if (error) throw error;
+
       const byMicrocmsId: Record<string, string> = {};
       const bySlug: Record<string, string> = {};
-      const metaByMicrocmsId: Record<string, { category: string; name: string }> = {};
-      for (const row of data || []) {
+      const metaByMicrocmsId: Record<string, SpotMeta> = {};
+
+      for (const row of data ?? []) {
         if (row.microcms_id) {
           byMicrocmsId[row.microcms_id] = row.id;
-          metaByMicrocmsId[row.microcms_id] = { category: row.category, name: row.name };
+          metaByMicrocmsId[row.microcms_id] = {
+            category: row.category,
+            name: row.name,
+          };
         }
         if (row.slug) bySlug[row.slug] = row.id;
       }
+
       return { byMicrocmsId, bySlug, metaByMicrocmsId };
     },
     staleTime: 1000 * 60 * 5,
@@ -34,9 +71,10 @@ export function useSpotIdMap() {
 }
 
 /**
- * microCMS のスポットデータと Supabase のマッピングを自動同期
- * - 新規スポット → Supabase に行を自動作成
- * - 住所のみで緯度経度が未設定 → Mapbox Geocoding で自動補完
+ * microCMS → Supabase 自動同期
+ * 1. 新規スポット → insert（座標がなければGeocoding）
+ * 2. 既存スポットの座標欠損 → Geocoding補完
+ * 3. 既存スポットのメタデータ乖離 → 差分update
  */
 export function useSpotIdSync(spots: Spot[]) {
   const queryClient = useQueryClient();
@@ -47,134 +85,93 @@ export function useSpotIdSync(spots: Spot[]) {
   useEffect(() => {
     if (!isAuthenticated || !idMap || spots.length === 0) return;
 
-    const missing = spots.filter(s => !idMap.byMicrocmsId[s.id]);
+    const refetch = (...keys: string[]) =>
+      Promise.all(keys.map(k => queryClient.refetchQueries({ queryKey: [k] })));
 
-    const syncMissing = async () => {
+    const insertMissing = async () => {
+      const missing = spots.filter(s => !idMap.byMicrocmsId[s.id]);
+      if (missing.length === 0) return;
+
       let changed = false;
-
       for (const spot of missing) {
-        // 座標が未設定で住所がある場合、Geocodingで補完
         let { latitude, longitude } = spot;
         if (isCoordsMissing(latitude, longitude) && spot.address) {
-          const result = await geocodeAddress(spot.address);
-          if (result) {
-            latitude = result.latitude;
-            longitude = result.longitude;
-          }
+          const coords = await geocodeAddress(spot.address);
+          if (coords) ({ latitude, longitude } = coords);
         }
 
-        const { error } = await supabase
-          .from('spots')
-          .insert({
-            microcms_id: spot.id,
-            slug: spot.slug,
-            name: spot.name,
-            description: spot.description,
-            category: spot.category,
-            area: spot.area,
-            latitude,
-            longitude,
-            address: spot.address,
-            photo_tip: spot.photo_tip,
-            best_time: spot.best_time,
-            radius_m: spot.radius_m || 100,
-            image_url: spot.image_url,
-            is_active: true,
-          });
-        const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
-        if (error && !errMsg.includes('duplicate')) {
-          if (import.meta.env.DEV) console.error('Spot sync failed:', spot.slug, errMsg);
-        } else if (!error) {
+        const { error } = await supabase.from('spots').insert({
+          microcms_id: spot.id,
+          slug: spot.slug,
+          ...buildMetadataPayload(spot),
+          latitude,
+          longitude,
+          address: spot.address,
+          radius_m: spot.radius_m || 100,
+          is_active: true,
+        });
+
+        if (error) {
+          const msg = typeof error === 'object' && error !== null && 'message' in error
+            ? String((error as { message: string }).message) : String(error);
+          if (!msg.includes('duplicate')) logSyncError('insert', spot.slug, error);
+        } else {
           changed = true;
         }
       }
 
-      if (changed) {
-        await queryClient.refetchQueries({ queryKey: ['spot-id-map'] });
-        await queryClient.refetchQueries({ queryKey: ['spots'] });
-      }
+      if (changed) await refetch('spot-id-map', 'spots');
     };
 
-    // 既存スポットで座標が未設定のものもGeocodingで補完
-    const geocodeMissing = async () => {
+    const geocodeMissingCoords = async () => {
       let updated = false;
       for (const spot of spots) {
         const supabaseId = idMap.byMicrocmsId[spot.id];
-        if (!supabaseId) continue;
-        if (geocodedRef.current.has(spot.id)) continue;
-        if (!isCoordsMissing(spot.latitude, spot.longitude)) continue;
-        if (!spot.address) continue;
+        if (!supabaseId || geocodedRef.current.has(spot.id)) continue;
+        if (!isCoordsMissing(spot.latitude, spot.longitude) || !spot.address) continue;
 
         geocodedRef.current.add(spot.id);
-
-        const result = await geocodeAddress(spot.address);
-        if (!result) continue;
+        const coords = await geocodeAddress(spot.address);
+        if (!coords) continue;
 
         const { error } = await supabase
           .from('spots')
-          .update({ latitude: result.latitude, longitude: result.longitude })
+          .update({ latitude: coords.latitude, longitude: coords.longitude })
           .eq('id', supabaseId);
 
-        if (error) {
-          const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
-          if (import.meta.env.DEV) console.error('Geocode update failed:', spot.slug, errMsg);
-        } else {
-          updated = true;
-        }
+        if (error) logSyncError('geocode', spot.slug, error);
+        else updated = true;
       }
-      // Geocoding完了後、spotsを強制再取得して座標を反映
-      if (updated) {
-        await queryClient.refetchQueries({ queryKey: ['spots'] });
-      }
+
+      if (updated) await refetch('spots');
     };
 
-    // 既存スポットのメタデータ（category, name等）が microCMS と Supabase で乖離していれば同期
-    const syncExistingMetadata = async () => {
-      const meta = idMap.metaByMicrocmsId;
-      if (!meta) return;
+    const syncStaleMetadata = async () => {
+      const { metaByMicrocmsId: meta, byMicrocmsId } = idMap;
 
       const stale = spots.filter(spot => {
-        const supabaseId = idMap.byMicrocmsId[spot.id];
-        if (!supabaseId) return false;
         const dbMeta = meta[spot.id];
-        if (!dbMeta) return false;
+        if (!dbMeta || !byMicrocmsId[spot.id]) return false;
         return dbMeta.category !== spot.category || dbMeta.name !== spot.name;
       });
-
       if (stale.length === 0) return;
 
       let updated = false;
       for (const spot of stale) {
-        const supabaseId = idMap.byMicrocmsId[spot.id];
         const { error } = await supabase
           .from('spots')
-          .update({
-            name: spot.name,
-            category: spot.category,
-            area: spot.area,
-            description: spot.description,
-            photo_tip: spot.photo_tip,
-            best_time: spot.best_time,
-            image_url: spot.image_url,
-          })
-          .eq('id', supabaseId);
+          .update(buildMetadataPayload(spot))
+          .eq('id', byMicrocmsId[spot.id]);
 
-        if (error) {
-          const errMsg = typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : String(error);
-          if (import.meta.env.DEV) console.error('Spot metadata sync failed:', spot.slug, errMsg);
-        } else {
-          updated = true;
-        }
+        if (error) logSyncError('metadata', spot.slug, error);
+        else updated = true;
       }
-      if (updated) {
-        await queryClient.refetchQueries({ queryKey: ['spot-id-map'] });
-      }
+
+      if (updated) await refetch('spot-id-map');
     };
 
-    if (missing.length > 0) {
-      syncMissing();
-    }
-    geocodeMissing();
-    syncExistingMetadata();
+    insertMissing();
+    geocodeMissingCoords();
+    syncStaleMetadata();
   }, [isAuthenticated, idMap, spots, queryClient]);
 }
