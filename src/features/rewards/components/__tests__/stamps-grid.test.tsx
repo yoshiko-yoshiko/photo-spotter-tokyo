@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { StampsGrid } from '../stamps-grid';
 import type { Spot } from '@/lib/microcms/types';
@@ -113,5 +113,42 @@ describe('StampsGrid', () => {
     );
 
     expect(container.querySelectorAll('button')).toHaveLength(0);
+  });
+
+  // --- QA追加テスト ---
+
+  it('navigates to spot detail page when spot is clicked', () => {
+    const spots = [makeSpot({ id: 's1', name: '浅草寺', slug: 'sensoji' })];
+
+    render(
+      <StampsGrid
+        spots={spots}
+        stampedSpotIds={new Set()}
+        idMap={{ byMicrocmsId: {} }}
+        isLoading={false}
+      />
+    );
+
+    fireEvent.click(screen.getByText('浅草寺'));
+    expect(mockNavigate).toHaveBeenCalledWith('/spots/sensoji');
+  });
+
+  it('navigates to correct slug for each spot', () => {
+    const spots = [
+      makeSpot({ id: 's1', name: '浅草寺', slug: 'sensoji' }),
+      makeSpot({ id: 's2', name: '上野公園', slug: 'ueno-park' }),
+    ];
+
+    render(
+      <StampsGrid
+        spots={spots}
+        stampedSpotIds={new Set()}
+        idMap={{ byMicrocmsId: {} }}
+        isLoading={false}
+      />
+    );
+
+    fireEvent.click(screen.getByText('上野公園'));
+    expect(mockNavigate).toHaveBeenCalledWith('/spots/ueno-park');
   });
 });

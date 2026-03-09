@@ -1,20 +1,20 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AuthPromptModal } from '../auth-prompt-modal';
 
-const mockLinkGoogle = vi.fn();
-const mockSignInWithGoogle = vi.fn();
+const { mockLinkGoogle, mockSignInWithGoogle, mockUseAuth, mockToastError } = vi.hoisted(() => ({
+  mockLinkGoogle: vi.fn(),
+  mockSignInWithGoogle: vi.fn(),
+  mockUseAuth: vi.fn(),
+  mockToastError: vi.fn(),
+}));
 
 vi.mock('@/lib/hooks/use-auth', () => ({
-  useAuth: () => ({
-    linkGoogle: mockLinkGoogle,
-    signInWithGoogle: mockSignInWithGoogle,
-    isGuest: false,
-  }),
+  useAuth: () => mockUseAuth(),
 }));
 
 vi.mock('sonner', () => ({
-  toast: { error: vi.fn() },
+  toast: { error: mockToastError },
 }));
 
 describe('AuthPromptModal', () => {
@@ -22,6 +22,11 @@ describe('AuthPromptModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseAuth.mockReturnValue({
+      linkGoogle: mockLinkGoogle,
+      signInWithGoogle: mockSignInWithGoogle,
+      isGuest: false,
+    });
   });
 
   it('renders nothing when open is false', () => {
@@ -59,5 +64,51 @@ describe('AuthPromptModal', () => {
 
     fireEvent.click(screen.getByText('Googleでログイン'));
     expect(mockSignInWithGoogle).toHaveBeenCalledTimes(1);
+  });
+
+  // --- QA追加テスト ---
+
+  it('calls linkGoogle instead of signInWithGoogle when user is guest', async () => {
+    mockUseAuth.mockReturnValue({
+      linkGoogle: mockLinkGoogle,
+      signInWithGoogle: mockSignInWithGoogle,
+      isGuest: true,
+    });
+    mockLinkGoogle.mockResolvedValue(undefined);
+
+    render(<AuthPromptModal open={true} onClose={onClose} />);
+
+    fireEvent.click(screen.getByText('Googleでログイン'));
+    expect(mockLinkGoogle).toHaveBeenCalledTimes(1);
+    expect(mockSignInWithGoogle).not.toHaveBeenCalled();
+  });
+
+  it('shows toast error when signInWithGoogle fails', async () => {
+    mockSignInWithGoogle.mockRejectedValue(new Error('auth failed'));
+
+    render(<AuthPromptModal open={true} onClose={onClose} />);
+
+    fireEvent.click(screen.getByText('Googleでログイン'));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('ログインに失敗しました。もう一度お試しください。');
+    });
+  });
+
+  it('shows toast error when linkGoogle fails for guest user', async () => {
+    mockUseAuth.mockReturnValue({
+      linkGoogle: mockLinkGoogle,
+      signInWithGoogle: mockSignInWithGoogle,
+      isGuest: true,
+    });
+    mockLinkGoogle.mockRejectedValue(new Error('link failed'));
+
+    render(<AuthPromptModal open={true} onClose={onClose} />);
+
+    fireEvent.click(screen.getByText('Googleでログイン'));
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalledWith('ログインに失敗しました。もう一度お試しください。');
+    });
   });
 });

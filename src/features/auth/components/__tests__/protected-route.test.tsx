@@ -88,4 +88,35 @@ describe('ProtectedRoute', () => {
 
     expect(screen.getByTestId('auth-modal')).toBeInTheDocument();
   });
+
+  // --- QA追加テスト ---
+
+  it('closes auth modal when close button in modal is clicked', () => {
+    mockUseAuth.mockReturnValue({ loading: false, isGuest: false, user: null });
+
+    render(
+      <ProtectedRoute>
+        <div>child content</div>
+      </ProtectedRoute>
+    );
+
+    fireEvent.click(screen.getByText('ログインする'));
+    expect(screen.getByTestId('auth-modal')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('close'));
+    expect(screen.queryByTestId('auth-modal')).not.toBeInTheDocument();
+  });
+
+  it('shows login prompt when user is null and isGuest is true simultaneously', () => {
+    mockUseAuth.mockReturnValue({ loading: false, isGuest: true, user: null });
+
+    render(
+      <ProtectedRoute>
+        <div>child content</div>
+      </ProtectedRoute>
+    );
+
+    expect(screen.getByText('この機能を使うにはログインが必要です')).toBeInTheDocument();
+    expect(screen.queryByText('child content')).not.toBeInTheDocument();
+  });
 });

@@ -143,4 +143,66 @@ describe('RewardsList', () => {
     fireEvent.click(screen.getByText('初心者バッジ'));
     expect(onSelectReward).toHaveBeenCalledWith(reward);
   });
+
+  // --- QA追加テスト ---
+
+  it('renders badge image when unlocked badge has badge_image_url', () => {
+    const rewards = [makeReward({
+      id: 'r1',
+      name: 'ゴールドバッジ',
+      type: 'badge',
+      badge_image_url: 'https://example.com/badge.png',
+      required_count: 3,
+    })];
+
+    render(
+      <RewardsList
+        rewards={rewards}
+        unlockedRewardIds={new Set(['r1'])}
+        stampCount={5}
+        onSelectReward={vi.fn()}
+      />
+    );
+
+    const img = screen.getByAltText('ゴールドバッジのバッジ');
+    expect(img).toBeInTheDocument();
+    expect(img).toHaveAttribute('src', 'https://example.com/badge.png');
+  });
+
+  it('does not show description when description is null', () => {
+    const rewards = [makeReward({ id: 'r1', name: 'テスト報酬', description: null })];
+
+    const { container } = render(
+      <RewardsList
+        rewards={rewards}
+        unlockedRewardIds={new Set()}
+        stampCount={0}
+        onSelectReward={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('テスト報酬')).toBeInTheDocument();
+    // description paragraph should not exist
+    const typeLabel = screen.getByText('バッジ');
+    const labelContainer = typeLabel.closest('.flex');
+    const descriptionP = labelContainer?.querySelector('p');
+    expect(descriptionP).toBeNull();
+  });
+
+  it('shows distinct styling for canUnlock state (not yet unlocked but enough stamps)', () => {
+    const rewards = [makeReward({ id: 'r1', required_count: 3 })];
+
+    const { container } = render(
+      <RewardsList
+        rewards={rewards}
+        unlockedRewardIds={new Set()}
+        stampCount={5}
+        onSelectReward={vi.fn()}
+      />
+    );
+
+    const button = container.querySelector('button');
+    expect(button?.className).toContain('border-primary');
+    expect(button?.className).not.toContain('border-stamp-gold');
+  });
 });
