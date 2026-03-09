@@ -22,10 +22,11 @@ export function useRewardUnlock() {
   const [showCelebration, setShowCelebration] = useState(false);
 
   const fetchUserRewards = useCallback(async (userId: string) => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_rewards')
       .select('reward_id, reward:rewards(id, name, type, badge_image_url, description)')
       .eq('user_id', userId);
+    if (error) throw error;
     return data;
   }, []);
 

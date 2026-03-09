@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client';
 import { useBlockedUsers } from '@/lib/hooks/use-blocked-users';
 import type { TimelinePost } from '@/features/timeline/types';
 import { PAGINATION } from '@/lib/constants';
+import { Tables, queryOrThrow } from '@/lib/supabase/helpers';
 
 const PAGE_SIZE = PAGINATION.PAGE_SIZE;
 
@@ -15,15 +16,15 @@ export function useTimeline() {
       const from = pageParam * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
 
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*, users:user_id(nickname, avatar_url, bio)')
-        .eq('is_public', true)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
-        .range(from, to);
-
-      if (error) throw error;
+      const data = await queryOrThrow(
+        supabase
+          .from(Tables.PHOTOS)
+          .select('*, users:user_id(nickname, avatar_url, bio)')
+          .eq('is_public', true)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to),
+      );
 
       return {
         posts: (data || []) as unknown as TimelinePost[],
