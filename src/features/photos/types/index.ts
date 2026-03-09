@@ -5,7 +5,7 @@ export type PhotoWithUser = Tables<'photos'> & {
 };
 
 export interface PhotoCardProps {
-  photo: PhotoWithUser;
+  photo: Tables<'photos'>;
   onClick?: () => void;
 }
 
