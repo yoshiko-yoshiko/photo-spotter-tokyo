@@ -1,0 +1,9 @@
+# Default owner
+* @nakashima-kanei24-fixer
+
+# CI/CD
+.github/ @nakashima-kanei24-fixer
+
+# Config files
+*.config.* @nakashima-kanei24-fixer
+tsconfig*.json @nakashima-kanei24-fixer
