@@ -8,7 +8,7 @@ export type ToasterToast = ToastProps & {
   action?: ToastActionElement;
 };
 
-export type ActionType = {
+type ActionType = {
   readonly ADD_TOAST: "ADD_TOAST";
   readonly UPDATE_TOAST: "UPDATE_TOAST";
   readonly DISMISS_TOAST: "DISMISS_TOAST";
