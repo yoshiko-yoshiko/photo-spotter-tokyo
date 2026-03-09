@@ -55,12 +55,17 @@ export async function resizeImage(file: File): Promise<File> {
   const canvas = document.createElement('canvas');
   canvas.width = newW;
   canvas.height = newH;
-  const ctx = canvas.getContext('2d')!;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context unavailable');
   ctx.drawImage(bitmap, 0, 0, newW, newH);
   bitmap.close();
 
-  const blob = await new Promise<Blob>((resolve) =>
-    canvas.toBlob((b) => resolve(b!), 'image/jpeg', IMAGE_CONFIG.JPEG_QUALITY)
+  const blob = await new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Image conversion failed'))),
+      'image/jpeg',
+      IMAGE_CONFIG.JPEG_QUALITY,
+    )
   );
 
   return new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
