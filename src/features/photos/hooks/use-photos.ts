@@ -2,10 +2,22 @@ import { useQuery, useInfiniteQuery, useMutation, useQueryClient } from '@tansta
 import { supabase } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useBlockedUsers } from '@/lib/hooks/use-blocked-users';
+import { Tables, queryOrThrow } from '@/lib/supabase/helpers';
 import type { ToggleLikeParams, ReportPhotoParams } from '@/features/photos/types';
 import { PAGINATION } from '@/lib/constants';
 
 const PAGE_SIZE = PAGINATION.PAGE_SIZE;
+
+/** Base query for public, non-deleted spot photos ordered by newest first. */
+function spotPhotosBase(spotId: string, columns = '*') {
+  return supabase
+    .from(Tables.PHOTOS)
+    .select(columns)
+    .eq('spot_id', spotId)
+    .eq('is_public', true)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false });
+}
 
 export function useSpotPhotos(spotId: string | undefined) {
   const { data: blockedIds = [] } = useBlockedUsers();
@@ -14,17 +26,10 @@ export function useSpotPhotos(spotId: string | undefined) {
     queryKey: ['spot-photos', spotId],
     queryFn: async () => {
       if (!spotId) return [];
-
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*, users:user_id(nickname, avatar_url, bio)')
-        .eq('spot_id', spotId)
-        .eq('is_public', true)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
+      const data = await queryOrThrow(
+        spotPhotosBase(spotId, '*, users:user_id(nickname, avatar_url, bio)'),
+      );
+      return data;
     },
     enabled: !!spotId,
   });
@@ -41,19 +46,12 @@ export function useInfiniteSpotPhotos(spotId: string | undefined) {
     queryFn: async ({ pageParam = 0 }) => {
       if (!spotId) return { photos: [], nextOffset: null };
 
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*')
-        .eq('spot_id', spotId)
-        .eq('is_public', true)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false })
-        .range(pageParam, pageParam + PAGE_SIZE - 1);
+      const data = await queryOrThrow(
+        spotPhotosBase(spotId).range(pageParam, pageParam + PAGE_SIZE - 1),
+      );
 
-      if (error) throw error;
-
-      const nextOffset = (data || []).length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
-      return { photos: data || [], nextOffset };
+      const nextOffset = data.length === PAGE_SIZE ? pageParam + PAGE_SIZE : null;
+      return { photos: data, nextOffset };
     },
     initialPageParam: 0,
     getNextPageParam: (lastPage) => lastPage.nextOffset,
@@ -78,12 +76,13 @@ export function usePhotoLikes(photoId: string | undefined) {
     queryKey: ['photo-like', photoId, user?.id],
     queryFn: async () => {
       if (!user || !photoId) return false;
-      const { data } = await supabase
-        .from('photo_likes')
+      const { data, error } = await supabase
+        .from(Tables.PHOTO_LIKES)
         .select('id')
         .eq('photo_id', photoId)
         .eq('user_id', user.id)
         .maybeSingle();
+      if (error) throw error;
       return !!data;
     },
     enabled: !!user && !!photoId,
@@ -101,15 +100,17 @@ export function useToggleLike() {
       if (!user) throw new Error('Not authenticated');
 
       if (isLiked) {
-        await supabase
-          .from('photo_likes')
+        const { error } = await supabase
+          .from(Tables.PHOTO_LIKES)
           .delete()
           .eq('photo_id', photoId)
           .eq('user_id', user.id);
+        if (error) throw error;
       } else {
-        await supabase
-          .from('photo_likes')
+        const { error } = await supabase
+          .from(Tables.PHOTO_LIKES)
           .insert({ photo_id: photoId, user_id: user.id });
+        if (error) throw error;
       }
     },
     onSuccess: (_, { photoId }) => {
@@ -143,9 +144,8 @@ export function useDeletePhoto() {
     mutationFn: async (photoId: string) => {
       if (!user) throw new Error('Not authenticated');
 
-      // Soft delete
       const { error } = await supabase
-        .from('photos')
+        .from(Tables.PHOTOS)
         .update({ deleted_at: new Date().toISOString() })
         .eq('id', photoId)
         .eq('user_id', user.id);
