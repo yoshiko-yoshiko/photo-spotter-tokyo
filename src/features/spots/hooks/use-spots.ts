@@ -39,7 +39,7 @@ export function useSpots() {
 
       return spots;
     },
-    staleTime: 1000 * 60 * 1,
+    staleTime: 1000 * 60 * 2,
   });
 }
 
