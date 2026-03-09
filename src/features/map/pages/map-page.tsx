@@ -47,7 +47,7 @@ export default function MapPage() {
 
   // Update markers when spots/filters change
   useEffect(() => {
-    if (!mapReady || !mapRef.current || viewMode !== 'map') return;
+    if (!mapReady || !mapRef.current || viewMode !== 'map' || !idMap) return;
     const map = mapRef.current;
 
     markersRef.current.forEach(m => m.remove());
