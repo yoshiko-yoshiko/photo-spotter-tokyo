@@ -54,7 +54,7 @@ export function StampsGrid({ spots, stampedSpotIds, idMap, isLoading }: StampsGr
                   }} />
               ) : null}
               <div className="w-full h-full items-center justify-center" style={{ display: spot.image_url ? 'none' : 'flex' }}>
-                <Camera className="w-6 h-6 text-muted-foreground/30" />
+                <Camera className="w-6 h-6 text-muted-foreground/50" />
               </div>
               {isCollected && (
                 <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-stamp-gold flex items-center justify-center">

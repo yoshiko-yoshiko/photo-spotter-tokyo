@@ -62,14 +62,14 @@ export function RewardUnlockOverlay({ rewards, open, onClose }: RewardUnlockOver
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-foreground">{reward.name}</p>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                  <div className="flex items-center gap-1 mt-0.5 min-w-0">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap ${
                       isBadge ? 'bg-primary/10 text-primary' : 'bg-accent/10 text-accent'
                     }`}>
                       {isBadge ? 'バッジ' : 'クーポン'}
                     </span>
                     {reward.description && (
-                      <span className="text-xs text-muted-foreground truncate">{reward.description}</span>
+                      <span className="text-xs text-muted-foreground truncate min-w-0">{reward.description}</span>
                     )}
                   </div>
                 </div>

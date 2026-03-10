@@ -67,7 +67,7 @@ export default function LoginPage() {
 
       {/* Bottom spacer + terms */}
       <div className="flex-1 flex flex-col justify-end pb-10">
-        <p className="text-muted-foreground/50 text-[10px] text-center">
+        <p className="text-muted-foreground/70 text-[10px] text-center">
           ログインすることで利用規約に同意したものとみなします
         </p>
       </div>

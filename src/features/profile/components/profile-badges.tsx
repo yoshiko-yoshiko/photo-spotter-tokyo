@@ -24,7 +24,7 @@ export function ProfileBadges({ rewards, unlockedRewardIds, onSelectReward }: Pr
               className={`rounded-2xl border p-3 text-center transition-all ${
                 isUnlocked
                   ? 'bg-card border-stamp-gold/40 shadow-sm'
-                  : 'bg-muted/50 border-border opacity-50'
+                  : 'bg-muted/50 border-border opacity-60'
               }`}
             >
               <div className={`w-14 h-14 mx-auto rounded-full flex items-center justify-center overflow-hidden ${

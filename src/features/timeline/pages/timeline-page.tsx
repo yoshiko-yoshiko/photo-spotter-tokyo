@@ -78,7 +78,7 @@ function TimelineCard({ post, onPhotoClick }: { post: TimelinePost; onPhotoClick
             />
           ) : (
             <div className="w-full aspect-[4/3] flex items-center justify-center bg-muted">
-              <Camera className="w-8 h-8 text-muted-foreground/30" />
+              <Camera className="w-8 h-8 text-muted-foreground/50" />
             </div>
           )}
           {heartBurst && (
@@ -208,7 +208,7 @@ export function TimelinePage() {
   if (posts.length === 0) {
     return (
       <div className="px-4 py-16 text-center">
-        <Camera className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+        <Camera className="w-12 h-12 text-muted-foreground/50 mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">まだ投稿がありません</p>
       </div>
     );

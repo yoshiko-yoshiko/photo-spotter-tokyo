@@ -61,7 +61,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, onClick }: PhotoCardPr
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-muted">
-              <Camera className="w-8 h-8 text-muted-foreground/30" />
+              <Camera className="w-8 h-8 text-muted-foreground/50" />
             </div>
           )}
           {/* Heart burst animation on double-tap */}

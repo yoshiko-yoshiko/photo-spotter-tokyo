@@ -27,7 +27,7 @@ export const SpotCard = memo(function SpotCard({ spot, isVisited, onClick, varia
             />
           ) : (
             <div className="w-full h-full bg-muted flex items-center justify-center">
-              <Camera className="w-6 h-6 text-muted-foreground/30" />
+              <Camera className="w-6 h-6 text-muted-foreground/50" />
             </div>
           )}
           {isVisited && (
@@ -62,7 +62,7 @@ export const SpotCard = memo(function SpotCard({ spot, isVisited, onClick, varia
           />
         ) : (
           <div className="w-full aspect-video bg-muted flex items-center justify-center">
-            <Camera className="w-8 h-8 text-muted-foreground/30" />
+            <Camera className="w-8 h-8 text-muted-foreground/50" />
           </div>
         )}
         {isVisited && (
